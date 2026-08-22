@@ -77,39 +77,10 @@ public final class OauthBrowser {
                 : new RuntimeException("OAuth failed after " + MAX_OAUTH_RETRIES + " attempts");
     }
 
-    /**
-     * Headless in CI / Linux without DISPLAY (no XServer). Headed locally on macOS/Windows
-     * where OAuth redirect is more reliable. Override with PLAYWRIGHT_HEADLESS=true|false.
-     */
-    private static boolean isHeadless() {
-        String raw = System.getenv("PLAYWRIGHT_HEADLESS");
-        if (raw != null && !raw.trim().isEmpty()) {
-            String v = raw.trim().toLowerCase();
-            if ("false".equals(v) || "0".equals(v) || "no".equals(v)) {
-                return false;
-            }
-            if ("true".equals(v) || "1".equals(v) || "yes".equals(v)) {
-                return true;
-            }
-        }
-        if (!isBlank(System.getenv("CI")) || !isBlank(System.getenv("GITLAB_CI"))) {
-            return true;
-        }
-        String os = System.getProperty("os.name", "").toLowerCase();
-        if (os.contains("linux")) {
-            String display = System.getenv("DISPLAY");
-            return display == null || display.trim().isEmpty();
-        }
-        return false;
-    }
-
     private static String runOauthOnce(String urlRedirectLinkAuthCode, String phoneNumber, String pin) {
         try (Playwright playwright = Playwright.create()) {
-            boolean headless = isHeadless();
-            log.info("Launching Chromium headless={}", headless);
-            // iPhone 13 context; headless on CI (no XServer), headed locally by default.
             BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(headless)
+                    .setHeadless(true)
                     .setArgs(Arrays.asList(
                             "--disable-web-security",
                             "--disable-features=IsolateOrigins",
