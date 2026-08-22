@@ -92,25 +92,16 @@ compute_maven_playwright_profile_args() {
     use_case=$(echo "$use_case" | tr '[:upper:]' '[:lower:]')
 
     local needs_playwright=false
+    local caseNameLower runPatternLower scope
+    caseNameLower=$(echo "${case_name:-}" | tr '[:upper:]' '[:lower:]')
+    runPatternLower=$(echo "${run_pattern:-}" | tr '[:upper:]' '[:lower:]')
+    scope="$caseNameLower $runPatternLower $use_case ${folder_name:-}"
+
     case "$use_case" in
-        ""|widget)
-            if [ -n "$case_name" ] || [ -n "$run_pattern" ]; then
-                local caseNameLower runPatternLower
-                caseNameLower=$(echo "$case_name" | tr '[:upper:]' '[:lower:]')
-                runPatternLower=$(echo "$run_pattern" | tr '[:upper:]' '[:lower:]')
-                if echo "$caseNameLower $runPatternLower" | grep -Eq "automation|oauth|browser|playwright"; then
-                    needs_playwright=true
-                fi
-            fi
-            ;;
-        paymentgateway|disbursement)
-            if [ -n "$case_name" ] || [ -n "$run_pattern" ]; then
-                local caseNameLower runPatternLower
-                caseNameLower=$(echo "$case_name" | tr '[:upper:]' '[:lower:]')
-                runPatternLower=$(echo "$run_pattern" | tr '[:upper:]' '[:lower:]')
-                if echo "$caseNameLower $runPatternLower" | grep -Eq "automation|oauth|browser|playwright"; then
-                    needs_playwright=true
-                fi
+        ""|widget|paymentgateway|disbursement)
+            if echo "$scope" | grep -Eq \
+                'automation|oauth|browser|playwright|apply_token|apply_ott|applytoken|applyott|get_auth|unbinding|accountunbinding|balance_inquiry|balanceinquiry|query_order|queryorder|query_payment|querypayment|cancel_order|cancelorder|refund_order|refundorder|payment_widget|paymentwidget|payment_pg|paymentpg|paymenttest|createorder'; then
+                needs_playwright=true
             fi
             ;;
     esac

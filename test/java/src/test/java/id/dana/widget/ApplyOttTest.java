@@ -42,6 +42,8 @@ public class ApplyOttTest {
         DanaConfig.Builder danaConfigBuilder = new DanaConfig.Builder();
         danaConfigBuilder
                 .partnerId(ConfigUtil.getConfig("X_PARTNER_ID", ""))
+                .clientSecret(ConfigUtil.getConfig("CLIENT_SECRET", ""))
+                .danaPublicKey(ConfigUtil.getConfig("DANA_PUBLIC_KEY", ""))
                 .privateKey(ConfigUtil.getConfig("PRIVATE_KEY", ""))
                 .origin(ConfigUtil.getConfig("ORIGIN", ""))
                 .env(DanaEnvironment.getByName(ConfigUtil.getConfig(EnvKey.ENV, "SANDBOX")));

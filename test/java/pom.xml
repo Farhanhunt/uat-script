@@ -9,7 +9,7 @@
   <url>http://maven.apache.org</url>
 
   <properties>
-    <dana-java.version>2.2.1</dana-java.version>
+    <dana-java.version>2.2.2</dana-java.version>
   </properties>
 
   <!-- Resolve dependencies from Maven Central -->
