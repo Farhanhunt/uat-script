@@ -171,8 +171,12 @@ class QueryOrderTest {
         Map<String, String> customHeaders = new HashMap<>();
         String caseName = "QueryPaymentUnauthorized";
 
-        QueryPaymentRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
+        // QueryPaymentUnauthorized has response only; use QueryPaymentCreatedOrder request shape
+        QueryPaymentRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, "QueryPaymentCreatedOrder",
                 QueryPaymentRequest.class);
+
+        requestData.setOriginalPartnerReferenceNo(partnerReferenceNoInit);
+        requestData.setMerchantId(merchantId);
 
         customHeaders.put(
                 DanaHeader.X_SIGNATURE,
@@ -261,7 +265,7 @@ class QueryOrderTest {
         CancelOrderRequest requestDataCancel = TestUtil.getRequest(
                 jsonPathFile,
                 "CancelOrder",
-                "CreateOrderApi",
+                "CancelOrderValidScenario",
                 CancelOrderRequest.class);
 
         requestDataCancel.setOriginalPartnerReferenceNo(tempDataOrder.get(0));

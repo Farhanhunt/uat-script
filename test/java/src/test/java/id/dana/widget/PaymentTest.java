@@ -286,7 +286,8 @@ public class PaymentTest {
 
     @Test
     void testPaymentIdempotent() throws InterruptedException {
-        String caseName = "PaymentIdempotent";
+        // PaymentIdempotent not in Widget.json; use PaymentSuccess request/response shape
+        String caseName = "PaymentSuccess";
 
         int numberOfThreads = 10;
         ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
@@ -297,6 +298,7 @@ public class PaymentTest {
 
         requestData.setPartnerReferenceNo(partnerReferenceNo);
         requestData.setMerchantId(merchantId);
+        requestData.setValidUpTo(PaymentPGUtil.generateDateWithOffset(15));
 
         for (int i = 0; i < numberOfThreads; i++) {
             executor.submit(() -> {
