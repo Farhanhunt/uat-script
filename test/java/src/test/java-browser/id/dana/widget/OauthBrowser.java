@@ -3,6 +3,7 @@ package id.dana.widget;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Keyboard;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
@@ -115,7 +116,7 @@ public final class OauthBrowser {
                     sleepQuietly(2000);
 
                     Locator pinField = page.locator(PIN_SELECTOR).first();
-                    if (!pinField.isVisible()) {
+                    if (!pinField.isVisible(new Locator.IsVisibleOptions().setTimeout(0))) {
                         fillPhoneNumber(page, phoneNumber);
                         sleepQuietly(1000);
                         clickContinueAfterPhone(page);
@@ -163,16 +164,7 @@ public final class OauthBrowser {
             }
             String frameUrl = frame.url();
             if (frameUrl != null && frameUrl.startsWith("chrome-error://")) {
-                log.info("Detected chrome-error (link.dana.id deep-link failure) — going back");
-                sleepQuietly(300);
-                try {
-                    page.goBack(new Page.GoBackOptions()
-                            .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
-                            .setTimeout(8000));
-                    log.info("Restored page after chrome-error");
-                } catch (RuntimeException e) {
-                    log.warn("GoBack from chrome-error failed: {}", e.getMessage());
-                }
+                log.info("Detected chrome-error (link.dana.id) — ignoring (headless cannot open deep links)");
             }
         });
     }
@@ -181,6 +173,10 @@ public final class OauthBrowser {
         page.navigate(redirectUrl, new Page.NavigateOptions()
                 .setTimeout(NAVIGATION_TIMEOUT_MS)
                 .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED));
+    }
+
+    private static boolean visibleNow(Locator locator) {
+        return locator.isVisible(new Locator.IsVisibleOptions().setTimeout(0));
     }
 
     private static void fillPhoneNumber(Page page, String phoneNumber) {
@@ -195,22 +191,25 @@ public final class OauthBrowser {
 
         for (String selector : phoneSelectors) {
             Locator field = page.locator(selector).first();
-            if (field.isVisible()) {
+            if (visibleNow(field)) {
                 String current = field.inputValue();
                 if (!isBlank(current)) {
                     log.info("Phone field already pre-filled by DANA: {} (skipping fill)", current);
                     return;
                 }
-                field.fill(phoneNumber);
+                // Headless fill() often leaves LANJUTKAN disabled; type so the page gets input events.
+                field.click();
+                field.fill("");
+                page.keyboard().type(phoneNumber, new Keyboard.TypeOptions().setDelay(50));
                 log.info("Phone filled using selector: {} with value: {}", selector, phoneNumber);
                 return;
             }
         }
 
         Locator label = page.locator("label.new-clearable-input.form-ipg-phonenumber").first();
-        if (label.isVisible()) {
+        if (visibleNow(label)) {
             label.click();
-            page.keyboard().type(phoneNumber);
+            page.keyboard().type(phoneNumber, new Keyboard.TypeOptions().setDelay(50));
             log.info("Phone filled via label click + keyboard type");
             return;
         }
@@ -224,9 +223,7 @@ public final class OauthBrowser {
             Locator button = page.getByRole(
                     com.microsoft.playwright.options.AriaRole.BUTTON,
                     new Page.GetByRoleOptions().setName(text).setExact(true)).first();
-            if (button.isVisible()) {
-                button.click();
-                log.info("Submit clicked via role+name: {}", text);
+            if (visibleNow(button) && clickWhenEnabled(button, text)) {
                 return;
             }
         }
@@ -240,9 +237,7 @@ public final class OauthBrowser {
         };
         for (String selector : buttonSelectors) {
             Locator button = page.locator(selector).first();
-            if (button.isVisible()) {
-                button.click();
-                log.info("Submit clicked via selector: {}", selector);
+            if (visibleNow(button) && clickWhenEnabled(button, selector)) {
                 return;
             }
         }
@@ -250,9 +245,40 @@ public final class OauthBrowser {
         log.warn("Could not click LANJUTKAN button");
     }
 
+    private static boolean clickWhenEnabled(Locator button, String label) {
+        try {
+            button.waitFor(new Locator.WaitForOptions()
+                    .setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE)
+                    .setTimeout(LOCATOR_TIMEOUT_MS));
+            // Wait until DANA enables the button after phone input events.
+            pageWaitEnabled(button);
+            button.click(new Locator.ClickOptions().setTimeout(LOCATOR_TIMEOUT_MS));
+            log.info("Submit clicked via: {}", label);
+            return true;
+        } catch (RuntimeException e) {
+            log.warn("Could not click {}: {}", label, e.getMessage());
+            return false;
+        }
+    }
+
+    private static void pageWaitEnabled(Locator button) {
+        long deadline = System.currentTimeMillis() + LOCATOR_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                if (button.isEnabled()) {
+                    return;
+                }
+            } catch (RuntimeException ignored) {
+                // Keep polling.
+            }
+            sleepQuietly(200);
+        }
+        throw new RuntimeException("button still disabled after " + LOCATOR_TIMEOUT_MS + "ms");
+    }
+
     private static void clickOptionalContinue(Page page) {
         Locator continueButton = page.locator("button.btn-continue.fs-unmask.btn.btn-primary").first();
-        if (continueButton.isVisible()) {
+        if (visibleNow(continueButton)) {
             continueButton.click();
             sleepQuietly(1000);
         }
@@ -262,7 +288,7 @@ public final class OauthBrowser {
         Locator pinField = page.locator(PIN_SELECTOR).first();
         boolean pinFilled = false;
 
-        if (pinField.isVisible()) {
+        if (visibleNow(pinField)) {
             pinField.click();
             page.keyboard().type(pin);
             log.info("PIN entered via keyboard type");
