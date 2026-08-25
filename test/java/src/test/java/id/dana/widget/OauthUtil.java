@@ -130,8 +130,6 @@ public class OauthUtil {
         Oauth2UrlData oauth2UrlData = new Oauth2UrlData();
         oauth2UrlData.setRedirectUrl(redirectUrl);
         oauth2UrlData.setMerchantId(ConfigUtil.getConfig("MERCHANT_ID", ""));
-        oauth2UrlData.setLang(null);
-        oauth2UrlData.setAllowRegistration(null);
 
         Oauth2UrlDataSeamlessData seamlessData = new Oauth2UrlDataSeamlessData();
         seamlessData.setMobileNumber(normalizedPhone);

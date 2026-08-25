@@ -132,6 +132,7 @@ public final class OauthBrowser {
                     }
 
                     enterPin(page, pin);
+                    log.info("PIN submitted, waiting for authCode (url={})", page.url());
                     return waitForAuthCode(page, capturedAuthCode);
                 } finally {
                     context.close();
@@ -144,7 +145,9 @@ public final class OauthBrowser {
 
     private static void registerAuthCodeCapture(Page page, AtomicReference<String> capturedAuthCode) {
         page.onFrameNavigated(frame -> {
-            String authCode = extractAuthCodeFromRedirect(frame.url());
+            String url = frame.url();
+            log.info("Frame navigated: {}", truncateUrl(url));
+            String authCode = extractAuthCodeFromRedirect(url);
             if (!isBlank(authCode) && capturedAuthCode.compareAndSet(null, authCode)) {
                 log.info("Captured authCode from navigation: {}", authCode);
             }
@@ -155,16 +158,41 @@ public final class OauthBrowser {
                 log.info("Captured authCode from request: {}", authCode);
             }
         });
+        page.onResponse(response -> {
+            String authCode = extractAuthCodeFromRedirect(response.url());
+            if (!isBlank(authCode) && capturedAuthCode.compareAndSet(null, authCode)) {
+                log.info("Captured authCode from response: {}", authCode);
+            }
+        });
+    }
+
+    private static String truncateUrl(String url) {
+        if (url == null) {
+            return "";
+        }
+        return url.length() <= 180 ? url : url.substring(0, 180) + "...";
     }
 
     private static void registerChromeErrorHandler(Page page, AtomicReference<String> capturedAuthCode) {
         page.onFrameNavigated(frame -> {
+            // Already got authCode — don't interrupt the redirect hop.
             if (!isBlank(capturedAuthCode.get())) {
                 return;
             }
             String frameUrl = frame.url();
             if (frameUrl != null && frameUrl.startsWith("chrome-error://")) {
-                log.info("Detected chrome-error (link.dana.id) — ignoring (headless cannot open deep links)");
+                // after PIN, DANA often opens link.dana.id; headless hits chrome-error.
+                // GoBack restores the web flow so the authCode redirect can proceed.
+                log.info("Detected chrome-error (link.dana.id deep-link failure) — going back");
+                sleepQuietly(300);
+                try {
+                    page.goBack(new Page.GoBackOptions()
+                            .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
+                            .setTimeout(8000));
+                    log.info("Restored page after chrome-error (url={})", page.url());
+                } catch (RuntimeException e) {
+                    log.warn("GoBack from chrome-error failed: {}", e.getMessage());
+                }
             }
         });
     }
