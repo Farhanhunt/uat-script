@@ -3,6 +3,7 @@ package widget_test
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"testing"
 	"time"
 
@@ -115,8 +116,9 @@ func createTestWidgetPaymentCanceled() (string, error) {
 		return "", err
 	}
 
-	// Set the correct partner reference number
+	// Set the correct partner reference number and merchant (matches Node/PHP helpers)
 	jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+	jsonDict["merchantId"] = os.Getenv("MERCHANT_ID")
 
 	// Create the CancelOrderRequest object and populate it with JSON data
 	jsonBytes, err := json.Marshal(jsonDict)

@@ -81,6 +81,11 @@ prepare_go_deps() {
     go clean -testcache > /dev/null 2>&1
 }
 
+go_test_run_pattern_from_file() {
+    test_file="$1"
+    grep -oE '^func Test[A-Za-z0-9_]+' "$test_file" 2>/dev/null | sed 's/^func //' | paste -sd'|' -
+}
+
 setup_go_runner() {
     if ! command -v go > /dev/null 2>&1; then
         echo "ERROR: Go not available in this system. Please install Go."

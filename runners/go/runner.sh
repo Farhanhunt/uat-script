@@ -38,9 +38,20 @@ run_module_files_individually() {
 
     for test_file in $found_files; do
         test_name=$(basename "$test_file" .go)
+        package_dir=$(dirname "$test_file")
+        run_pattern=$(go_test_run_pattern_from_file "$test_file")
         echo "=== Running $test_name ==="
 
-        if run_go_test_package "$test_file" "600s" ""; then
+        if [ -z "$run_pattern" ]; then
+            echo "ERROR: No Test functions found in $test_file" >&2
+            total_failed=$((total_failed + 1))
+            failed_files="$failed_files $test_name"
+            total_tests=$((total_tests + 1))
+            echo ""
+            continue
+        fi
+
+        if run_go_test_package "$package_dir" "600s" "$run_pattern"; then
             echo "✅ $test_name PASSED"
             total_passed=$((total_passed + 1))
         else

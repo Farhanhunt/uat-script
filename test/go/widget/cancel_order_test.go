@@ -3,7 +3,9 @@ package widget_test
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"testing"
+	"time"
 
 	widget "github.com/dana-id/dana-go/v2/widget/v1"
 
@@ -14,6 +16,56 @@ const (
 	widgetTitleCase = "CancelOrder"
 	widgetJsonPath  = "../../../resource/request/components/Widget.json"
 )
+
+func TestCancelOrderValidScenario(t *testing.T) {
+	partnerReferenceNo, err := createTestWidgetPayment()
+	if err != nil {
+		t.Fatalf("Failed to create test widget payment: %v", err)
+	}
+
+	time.Sleep(2 * time.Second)
+
+	caseName := "CancelOrderValidScenario"
+	jsonDict, err := helper.GetRequest(widgetJsonPath, widgetTitleCase, caseName)
+	if err != nil {
+		t.Fatalf("Failed to get request data: %v", err)
+	}
+
+	jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+	jsonDict["merchantId"] = os.Getenv("MERCHANT_ID")
+
+	jsonBytes, err := json.Marshal(jsonDict)
+	if err != nil {
+		t.Fatalf("Failed to marshal JSON: %v", err)
+	}
+
+	var request widget.CancelOrderRequest
+	if err = json.Unmarshal(jsonBytes, &request); err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	ctx := context.Background()
+	apiResponse, httpResponse, err := helper.ApiClient.WidgetAPI.CancelOrder(ctx).CancelOrderRequest(request).Execute()
+	if err != nil {
+		t.Fatalf("API call failed: %v", err)
+	}
+	defer httpResponse.Body.Close()
+
+	responseJSON, err := apiResponse.MarshalJSON()
+	if err != nil {
+		t.Fatalf("Failed to convert response to JSON: %v", err)
+	}
+
+	if err = helper.AssertResponse(
+		widgetJsonPath,
+		widgetTitleCase,
+		caseName,
+		string(responseJSON),
+		map[string]interface{}{"partnerReferenceNo": partnerReferenceNo},
+	); err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestCancelOrderFailUserStatusAbnormal(t *testing.T) {
 	caseName := "CancelOrderFailUserStatusAbnormal"

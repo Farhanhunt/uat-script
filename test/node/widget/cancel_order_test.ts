@@ -3,9 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { fail } from 'assert';
-import { getRequest } from '../helper/util';
+import { getRequest, generateFormattedDate } from '../helper/util';
 import { assertResponse, assertFailResponse } from '../helper/assertion';
-import { CancelOrderRequest } from 'dana-node/widget/v1';
+import { CancelOrderRequest, WidgetPaymentRequest } from 'dana-node/widget/v1';
 import { executeManualApiRequest } from '../helper/apiHelpers';
 
 dotenv.config();
@@ -29,6 +29,35 @@ function generateReferenceNo(): string {
 }
 
 describe('CancelOrder Tests', () => {
+    test('should cancel order with valid scenario', async () => {
+        const caseName = 'CancelOrderValidScenario';
+
+        const widgetPaymentRequestData: WidgetPaymentRequest = getRequest<WidgetPaymentRequest>(
+            jsonPathFile,
+            'Payment',
+            'PaymentSuccess',
+        );
+        const partnerReferenceNo = generateReferenceNo();
+        widgetPaymentRequestData.partnerReferenceNo = partnerReferenceNo;
+        widgetPaymentRequestData.validUpTo = generateFormattedDate(900, 7);
+
+        await dana.widgetApi.widgetPayment(widgetPaymentRequestData);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        const cancelOrderRequestData: CancelOrderRequest = getRequest<CancelOrderRequest>(
+            jsonPathFile,
+            titleCase,
+            caseName,
+        );
+        cancelOrderRequestData.originalPartnerReferenceNo = partnerReferenceNo;
+        cancelOrderRequestData.merchantId = merchantId;
+
+        const response = await dana.widgetApi.cancelOrder(cancelOrderRequestData);
+        await assertResponse(jsonPathFile, titleCase, caseName, response, {
+            partnerReferenceNo,
+        });
+    });
+
     test('should fail with user status abnormal', async () => {
         const caseName = 'CancelOrderFailUserStatusAbnormal';
         const requestData: CancelOrderRequest = getRequest(jsonPathFile, titleCase, caseName);
