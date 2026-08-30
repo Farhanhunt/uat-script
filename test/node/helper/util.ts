@@ -446,6 +446,26 @@ function widgetPaymentValidUpTo(minutesFromNow = 15): string {
   return generateFormattedDate(minutesFromNow * 60, 7);
 }
 
+async function retryTest(
+  attempts = 3,
+  delayMs = 1000,
+  testFn: () => Promise<void>
+): Promise<void> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+    try {
+      await testFn();
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 /**
  * Export all utility functions for use in test files
  * 
@@ -460,6 +480,7 @@ export {
   getResponse,
   getResponseCode,
   retryOnInconsistentRequest,
+  retryTest,
   automatePayment,
   generateFormattedDate,
   generatePaymentGatewayPartnerReferenceNo,

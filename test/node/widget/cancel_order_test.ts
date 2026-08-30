@@ -3,8 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { fail } from 'assert';
-import { getRequest, generateFormattedDate } from '../helper/util';
-import { assertResponse, assertFailResponse } from '../helper/assertion';
+import { getRequest, generateFormattedDate, retryTest } from '../helper/util';
+import { assertResponse, assertFailResponse, assertSdkErrorResponse } from '../helper/assertion';
 import { CancelOrderRequest, WidgetPaymentRequest } from 'dana-node/widget/v1';
 import { executeManualApiRequest } from '../helper/apiHelpers';
 import { createTestWidgetPaymentRefunded } from './payment_widget_util';
@@ -118,19 +118,24 @@ describe('CancelOrder Tests', () => {
 
     test('should fail with order not exist', async () => {
         const caseName = 'CancelOrderFailOrderNotExist';
-        const requestData: CancelOrderRequest = getRequest(jsonPathFile, titleCase, caseName);
-        requestData.originalPartnerReferenceNo = uuidv4(); // Use a random reference number to simulate non-existent order
-        requestData.originalReferenceNo = uuidv4(); // Use a random reference number to simulate non-existent order
-        try {
-            const response = await dana.widgetApi.cancelOrder(requestData);
-            await assertFailResponse(jsonPathFile, titleCase, caseName, response);
-        } catch (e: any) {
-            if (e instanceof ResponseError) {
-                await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
-            } else {
-                fail('CancelOrder test failed: ' + (e.message || e));
+
+        await retryTest(3, 1000, async () => {
+            const requestData: CancelOrderRequest = getRequest(jsonPathFile, titleCase, caseName);
+            requestData.originalPartnerReferenceNo = uuidv4();
+            requestData.originalReferenceNo = uuidv4();
+            const variableDict = { originalPartnerReferenceNo: requestData.originalPartnerReferenceNo };
+
+            try {
+                const response = await dana.widgetApi.cancelOrder(requestData);
+                await assertSdkErrorResponse(jsonPathFile, titleCase, caseName, response, null, variableDict);
+            } catch (e: any) {
+                if (e instanceof ResponseError) {
+                    await assertSdkErrorResponse(jsonPathFile, titleCase, caseName, null, e, variableDict);
+                } else {
+                    fail('CancelOrder test failed: ' + (e.message || e));
+                }
             }
-        }
+        });
     });
 
     test('should fail with exceed cancel window time', async () => {

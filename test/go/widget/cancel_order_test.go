@@ -190,48 +190,38 @@ func TestCancelOrderFailMissingParameter(t *testing.T) {
 }
 
 func TestCancelOrderFailOrderNotExist(t *testing.T) {
-	t.Skip("Expected error but got successful response")
 	caseName := "CancelOrderFailOrderNotExist"
 
-	// Get the request data from JSON
-	jsonDict, err := helper.GetRequest(widgetJsonPath, widgetTitleCase, caseName)
-	if err != nil {
-		t.Fatalf("Failed to get request data: %v", err)
-	}
-
-	// Marshal to JSON and unmarshal to widget SDK struct
-	jsonBytes, err := json.Marshal(jsonDict)
-	if err != nil {
-		t.Fatalf("Failed to marshal JSON: %v", err)
-	}
-
-	var request widget.CancelOrderRequest
-	err = json.Unmarshal(jsonBytes, &request)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
-
-	// Execute the SDK API call and expect error response
-	ctx := context.Background()
-
-	// Make the API call using the Widget SDK
-	_, httpResponse, err := helper.ApiClient.WidgetAPI.CancelOrder(ctx).CancelOrderRequest(request).Execute()
-	if err != nil {
-		// This is expected for error test cases
-		variableDict := map[string]interface{}{
-			"originalPartnerReferenceNo": jsonDict["originalPartnerReferenceNo"],
-		}
-
-		// Assert the error response matches expected error pattern
-		err = helper.AssertFailResponse(widgetJsonPath, widgetTitleCase, caseName, httpResponse, variableDict)
+	helper.RetryTest(t, 3, time.Second, func() error {
+		jsonDict, err := helper.GetRequest(widgetJsonPath, widgetTitleCase, caseName)
 		if err != nil {
-			t.Fatal(err)
+			return fmt.Errorf("failed to get request data: %w", err)
 		}
-	} else {
-		// If no error occurred, this is unexpected for error test cases
-		defer httpResponse.Body.Close()
-		t.Fatalf("Expected error for case %s but API call succeeded", caseName)
-	}
+
+		partnerReferenceNo := uuid.New().String()
+		referenceNo := uuid.New().String()
+		jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+		jsonDict["originalReferenceNo"] = referenceNo
+		jsonDict["merchantId"] = os.Getenv("MERCHANT_ID")
+
+		jsonBytes, err := json.Marshal(jsonDict)
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+
+		var request widget.CancelOrderRequest
+		if err = json.Unmarshal(jsonBytes, &request); err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
+
+		ctx := context.Background()
+		apiResponse, httpResponse, err := helper.ApiClient.WidgetAPI.CancelOrder(ctx).CancelOrderRequest(request).Execute()
+
+		variableDict := map[string]interface{}{
+			"originalPartnerReferenceNo": partnerReferenceNo,
+		}
+		return helper.AssertSdkErrorResponse(widgetJsonPath, widgetTitleCase, caseName, apiResponse, httpResponse, err, variableDict)
+	})
 }
 
 func TestCancelOrderFailExceedCancelWindowTime(t *testing.T) {

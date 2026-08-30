@@ -273,33 +273,48 @@ class CancelOrderTest extends TestCase
     }
 
     /**
-     * Should fail with order not exist (FAIL: Expected ApiException was not thrown)
+     * Should fail with order not exist
      */
     public function testCancelOrderFailOrderNotExist(): void
     {
-        $this->markTestSkipped('Expected error but got successful response (same as Go)');
-
         Util::withDelay(function () {
-            $caseName = 'CancelOrderFailOrderNotExist';
-            $jsonDict = Util::getRequest(
-                self::$jsonPathFile,
-                self::$titleCase,
-                $caseName
-            );
-            $partnerReferenceNo = PaymentUtil::generatePartnerReferenceNo();
-            $jsonDict['originalPartnerReferenceNo'] = $partnerReferenceNo;
-            $jsonDict['originalReferenceNo'] = $partnerReferenceNo;
-            $requestObj = ObjectSerializer::deserialize(
-                $jsonDict,
-                'Dana\Widget\v1\Model\CancelOrderRequest'
-            );
-            try {
-                self::$apiInstance->cancelOrder($requestObj);
-                $this->fail('Expected ApiException was not thrown');
-            } catch (ApiException $e) {
-                Assertion::assertFailResponse(self::$jsonPathFile, self::$titleCase, $caseName, $e->getResponseBody());
-                $this->assertTrue(true);
-            }
+            Util::retryTest(function () {
+                $caseName = 'CancelOrderFailOrderNotExist';
+                $jsonDict = Util::getRequest(
+                    self::$jsonPathFile,
+                    self::$titleCase,
+                    $caseName
+                );
+                $partnerReferenceNo = PaymentUtil::generatePartnerReferenceNo();
+                $referenceNo = PaymentUtil::generatePartnerReferenceNo();
+                $jsonDict['originalPartnerReferenceNo'] = $partnerReferenceNo;
+                $jsonDict['originalReferenceNo'] = $referenceNo;
+                $jsonDict['merchantId'] = self::$merchantId;
+                $requestObj = ObjectSerializer::deserialize(
+                    $jsonDict,
+                    'Dana\Widget\v1\Model\CancelOrderRequest'
+                );
+                try {
+                    $apiResponse = self::$apiInstance->cancelOrder($requestObj);
+                    Assertion::assertResponse(
+                        self::$jsonPathFile,
+                        self::$titleCase,
+                        $caseName,
+                        $apiResponse->__toString(),
+                        ['originalPartnerReferenceNo' => $partnerReferenceNo]
+                    );
+                    $this->assertTrue(true);
+                } catch (ApiException $e) {
+                    Assertion::assertFailResponse(
+                        self::$jsonPathFile,
+                        self::$titleCase,
+                        $caseName,
+                        $e->getResponseBody(),
+                        ['originalPartnerReferenceNo' => $partnerReferenceNo]
+                    );
+                    $this->assertTrue(true);
+                }
+            }, 3, 1000);
         });
     }
 

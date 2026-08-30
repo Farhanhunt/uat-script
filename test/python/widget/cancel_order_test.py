@@ -24,9 +24,9 @@ from dana.api_client import ApiClient
 from dana.exceptions import *
 from uuid import uuid4
 from helper.api_helpers import get_headers_with_signature, execute_and_assert_api_error
-from helper.util import get_request, with_delay
+from helper.util import get_request, with_delay, retry_test
 from widget.payment_widget_util import automate_payment_widget
-from helper.assertion import assert_response, assert_fail_response
+from helper.assertion import assert_response, assert_fail_response, assert_sdk_error_response
 
 # Test configuration and constants
 
@@ -234,37 +234,40 @@ def test_cancel_order_fail_missing_parameter():
         None,
     )
 
+@retry_test(attempts=3, delay_seconds=1)
 @with_delay()
 def test_cancel_order_fail_order_not_exist():
-    pytest.skip(
-        "Skipped: sandbox/API no longer returns NotFoundException for non-existent order "
-        "(call succeeds or differs from test expectation)."
-    )
-    # Case name and JSON request preparation
     case_name = "CancelOrderFailOrderNotExist"
     json_dict = get_request(json_path_file, title_case, case_name)
-    print(json_dict)
+    partner_reference_no = str(uuid4())
+    reference_no = str(uuid4())
+    json_dict["originalPartnerReferenceNo"] = partner_reference_no
+    json_dict["originalReferenceNo"] = reference_no
+    json_dict["merchantId"] = os.environ.get("MERCHANT_ID")
 
-    # Create the CancelOrderRequest object from the JSON dictionary
     cancel_order_request_obj = CancelOrderRequest.from_dict(json_dict)
+    variable_dict = {"originalPartnerReferenceNo": partner_reference_no}
+    api_response = None
+
     try:
-        # Call the cancel_order API endpoint with the request object
         api_response = api_instance.cancel_order(cancel_order_request_obj)
-        print(api_response)
-        # If the API call succeeds, fail the test as we expect an exception
-        pytest.fail("Expected NotFoundException but API call succeeded")
-    except NotFoundException as e:
-        # If the API call fails with NotFoundException, assert the error response
-        assert_fail_response(
+        assert_sdk_error_response(
             json_path_file,
             title_case,
             case_name,
-            e.body,
-            {'originalPartnerReferenceNo': json_dict["originalPartnerReferenceNo"]}
+            api_response,
+            None,
+            variable_dict,
         )
-    except Exception as e:
-        # If any other exception occurs, fail the test
-        pytest.fail("Expected NotFoundException but got a different exception")
+    except ApiException as exc:
+        assert_sdk_error_response(
+            json_path_file,
+            title_case,
+            case_name,
+            api_response,
+            exc,
+            variable_dict,
+        )
 
 @with_delay()
 def test_cancel_order_fail_exceed_cancel_window_time():

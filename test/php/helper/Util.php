@@ -512,6 +512,31 @@ class Util
         throw $lastException;
     }
 
+    /**
+     * Retries a test callback including assertion failures (same as Go helper.RetryTest).
+     */
+    public static function retryTest(callable $testCallback, int $maxAttempts = 3, int $delayMs = 1000): void
+    {
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                $testCallback();
+                return;
+            } catch (\Throwable $e) {
+                $lastException = $e;
+                if ($attempt >= $maxAttempts) {
+                    throw $e;
+                }
+                usleep($delayMs * 1000);
+            }
+        }
+
+        if ($lastException !== null) {
+            throw $lastException;
+        }
+    }
+
   public static function paymentCodeFromCreateOrderResponse(string $responseBody): string
   {
     $decoded = json_decode($responseBody, true);

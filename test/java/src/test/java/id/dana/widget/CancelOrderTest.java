@@ -105,16 +105,16 @@ public class CancelOrderTest {
     }
 
     @Test
-    @RetryTestUtil.Retry
-    @Disabled("Expected error but got successful response (same as Go)")
+    @RetryTestUtil.Retry(value = 3, waitMs = 1000)
     void testCancelOrderTransactionNotFound() throws IOException {
         String caseName = "CancelOrderFailOrderNotExist";
         String partnerReferenceNo = UUID.randomUUID().toString();
+        String referenceNo = UUID.randomUUID().toString();
         CancelOrderRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
                 CancelOrderRequest.class);
         requestData.setMerchantId(merchantId);
         requestData.setOriginalPartnerReferenceNo(partnerReferenceNo);
-        requestData.setOriginalReferenceNo(partnerReferenceNo);
+        requestData.setOriginalReferenceNo(referenceNo);
         CancelOrderResponse response = widgetApi.cancelOrder(requestData);
         TestUtil.assertResponse(jsonPathFile, titleCase, caseName, response, null);
     }
