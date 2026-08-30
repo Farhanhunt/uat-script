@@ -22,7 +22,6 @@ class QueryPaymentTest extends TestCase
     private static $apiInstance;
     private static $orderReferenceNumber;
     private static $orderPaidReferenceNumber;
-    private static $orderCanceledReferenceNumber;
 
     public static function setUpBeforeClass(): void
     {
@@ -46,9 +45,6 @@ class QueryPaymentTest extends TestCase
 
         // Order in paid status (PAID) - using OtherWallet payment method with specific amount
         self::$orderPaidReferenceNumber = self::createTestOrderPaid();
-
-        // Order in canceled status (CANCELLED)
-        self::$orderCanceledReferenceNumber = self::createTestOrderCanceled();
     }
 
     /**
@@ -213,6 +209,7 @@ class QueryPaymentTest extends TestCase
     public function testQueryPaymentCanceledOrder(): void
     {
         Util::withDelay(function() {
+            $orderCanceledReferenceNumber = self::createTestOrderCanceled();
             $caseName = 'QueryPaymentCanceledOrder';
             
             // Get the request data from the JSON file
@@ -223,7 +220,7 @@ class QueryPaymentTest extends TestCase
             );
             
             // Set the correct partner reference number
-            $jsonDict['originalPartnerReferenceNo'] = self::$orderCanceledReferenceNumber;
+            $jsonDict['originalPartnerReferenceNo'] = $orderCanceledReferenceNumber;
             $jsonDict['merchantId'] = getenv('MERCHANT_ID');
             
             // Create a QueryPaymentRequest object from the JSON request data
@@ -242,7 +239,7 @@ class QueryPaymentTest extends TestCase
                     self::$titleCase, 
                     $caseName, 
                     $apiResponse->__toString(),
-                    ['partnerReferenceNo' => self::$orderCanceledReferenceNumber]
+                    ['partnerReferenceNo' => $orderCanceledReferenceNumber]
                 );
                 
                 $this->assertTrue(true);

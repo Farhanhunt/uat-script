@@ -213,14 +213,6 @@ describe('Query Payment Tests', () => {
     } catch (e) {
       console.error('Failed to create shared paid order - tests cannot continue:', e);
     }
-
-    try {
-      await createCanceledOrder()
-
-      console.log(`Shared canceled order created with reference: ${sharedOriginalCanceledPartnerReference}`);
-    } catch (e) {
-      console.error('Failed to create shared canceled order - tests cannot continue:', e);
-    }
   });
 
   /**
@@ -294,6 +286,7 @@ describe('Query Payment Tests', () => {
    * @expectedResult HTTP 200 OK with payment status CANCELLED
    */
   test('should successfully query payment with status canceled (CANCELLED)', async () => {
+    await createCanceledOrder();
     const queryPaymentCaseName = "QueryPaymentCanceledOrder";
     await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for cancellation to propagate
     try {

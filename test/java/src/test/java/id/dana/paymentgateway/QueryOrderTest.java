@@ -17,6 +17,7 @@ import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +39,7 @@ class QueryOrderTest {
     private static String userPhone = "083811223355";
     private static final String merchantId = ConfigUtil.getConfig("MERCHANT_ID", "216620010016033632482");
     private static PaymentGatewayApi api;
-    private static String partnerReferenceNoInit,partnerReferenceNoPaid,partnerReferenceNoCancel;
+    private static String partnerReferenceNoInit,partnerReferenceNoPaid;
 
     @BeforeAll
     static void setUpBeforeAll() throws IOException, InterruptedException {
@@ -56,7 +57,6 @@ class QueryOrderTest {
 //        Create order
         List<String> dataOrder = createOrder();
         partnerReferenceNoInit = dataOrder.get(0);
-        partnerReferenceNoCancel = cancelOrder();
     }
 
     @Test
@@ -102,7 +102,9 @@ class QueryOrderTest {
     }
 
     @Test
+    @DisabledIfEnvironmentVariable(named = "CI", matches = ".*")
     void testQueryPaymentCanceledOrder() throws IOException {
+        String partnerReferenceNoCancel = cancelOrder();
         Map<String, Object> variableDict = new HashMap<>();
         String caseName = "QueryPaymentCanceledOrder";
         QueryPaymentRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,

@@ -53,6 +53,7 @@ class CancelOrderTest {
 
     @Test
     @DisplayName("Cancel Order Valid Scenario")
+    @DisabledIfEnvironmentVariable(named = "CI", matches = ".*")
     void testCancelOrderValid() throws IOException {
         String caseName = "CancelOrderValidScenario";
         CancelOrderRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,

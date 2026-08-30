@@ -137,12 +137,15 @@ class CreateOrderTest extends TestCase
 
     /**
      * Should create an order using API scenario with QRIS payment method
-     *
-     * @skip
      */
     public function testCreateOrderNetworkPayPgQris(): void
     {
-        Util::withDelay(function() {
+        $externalStoreId = getenv('EXTERNAL_SHOP_ID') ?: '';
+        if ($externalStoreId === '') {
+            $this->markTestSkipped('externalStoreId is required when payOption is NETWORK_PAY_PG_QRIS');
+        }
+
+        Util::withDelay(function() use ($externalStoreId) {
             $caseName = 'CreateOrderNetworkPayPgQris';
             
             // Get the request data from the JSON file
@@ -154,9 +157,10 @@ class CreateOrderTest extends TestCase
             
             // QRIS requires partnerReferenceNo ≤ 25 chars (UUID is 36)
             $partnerReferenceNo = Util::generatePaymentGatewayPartnerReferenceNo();
+            echo "[REF] case=$caseName partnerReferenceNo=$partnerReferenceNo\n";
             $jsonDict['partnerReferenceNo'] = $partnerReferenceNo;
-            $jsonDict['externalStoreId'] = getenv('EXTERNAL_SHOP_ID');
-            $jsonDict['validUpTo'] = Util::paymentGatewaySandboxValidUpTo();
+            $jsonDict['externalStoreId'] = $externalStoreId;
+            $jsonDict['validUpTo'] = Util::generateFormattedDate(600, 7);
 
             $createOrderRequestObj = ObjectSerializer::deserialize(
                 $jsonDict,
@@ -164,10 +168,12 @@ class CreateOrderTest extends TestCase
             );
 
             $createOrderRequestObj->setPartnerReferenceNo($partnerReferenceNo);
+            $createOrderRequestObj->setExternalStoreId($externalStoreId);
             
             try {
-                // Make the API call
-                $apiResponse = self::$apiInstance->createOrder($createOrderRequestObj);
+                $apiResponse = Util::retryOnInconsistentRequest(function () use ($createOrderRequestObj) {
+                    return self::$apiInstance->createOrder($createOrderRequestObj);
+                }, 3, 2000);
                 
                 // Assert the API response
                 Assertion::assertResponse(

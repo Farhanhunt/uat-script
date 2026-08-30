@@ -44,7 +44,6 @@ const dana = new Dana({
 
 // Merchant configuration from environment variables
 const merchantId = process.env.MERCHANT_ID || "216620010016033632482";
-const externalShopId = process.env.EXTERNAL_SHOP_ID || "default_external_shop_id";
 
 /**
  * Generates a unique partner reference number using UUID v4
@@ -191,16 +190,22 @@ describe('Payment Gateway - Create Order Tests', () => {
    * @paymentMethod QRIS (Quick Response Code Indonesian Standard)
    * @skipped Currently disabled - may require specific merchant configuration or testing environment
    */
-  test('CreateOrderNetworkPayPgQris - should successfully create order with API scenario and pay with QRIS payment method', async () => {
+  (process.env.EXTERNAL_SHOP_ID ? test : test.skip)(
+    'CreateOrderNetworkPayPgQris - should successfully create order with API scenario and pay with QRIS payment method',
+    async () => {
     const caseName = "CreateOrderNetworkPayPgQris";
     const requestData: any = getRequest(jsonPathFile, titleCase, caseName);
 
     const partnerReferenceNo = generatePaymentGatewayPartnerReferenceNo();
     requestData.partnerReferenceNo = partnerReferenceNo;
-    requestData.validUpTo = paymentGatewaySandboxValidUpTo();
-    requestData.externalStoreId = externalShopId;
+    requestData.validUpTo = generateFormattedDate(600, 7);
+    requestData.externalStoreId = process.env.EXTERNAL_SHOP_ID;
 
-    const response = await dana.paymentGatewayApi.createOrder(requestData);
+    const response = await retryOnInconsistentRequest(
+      () => dana.paymentGatewayApi.createOrder(requestData),
+      3,
+      2000
+    );
     // Validate API response includes proper QRIS payment details
     await assertResponse(jsonPathFile, titleCase, caseName, response, { partnerReferenceNo });
   });

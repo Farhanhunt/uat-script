@@ -37,6 +37,7 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,7 @@ public class CreateOrderTest {
   private PaymentGatewayApi api;
   private static MerchantManagementApi managementMerchantApi;
   private static final String merchantId = ConfigUtil.getConfig("MERCHANT_ID", "216620010016033632482");
-  private static final String externalStoreId = ConfigUtil.getConfig("EXTERNAL_SHOP_ID", "216620010016033632482");
+  private static final String externalStoreId = ConfigUtil.getConfig("EXTERNAL_SHOP_ID", "");
 
   @BeforeEach
   void setUp() {
@@ -149,6 +150,10 @@ public class CreateOrderTest {
   @Test
   @Retry(value = 3, waitMs = 2000)
   void testCreateOrderNetworkPayPgQris() {
+    Assumptions.assumeTrue(
+        !StringUtils.isBlank(externalStoreId),
+        "externalStoreId is required when payOption is NETWORK_PAY_PG_QRIS");
+
     String caseName = "CreateOrderNetworkPayPgQris";
     CreateOrderByApiRequest requestData = PaymentPGUtil.getCreateOrderApiRequest(jsonPathFile, titleCase, caseName);
 

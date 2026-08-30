@@ -151,6 +151,7 @@ The `test_case` argument maps each Portal API to a test file or class. For **(ma
 | TopUp to Bank **(mandatory)** | `disbursement_to_bank_test` *(Go · Node: `transfer_to_bank_test`)* | `TransferToBankTest` | `TransferToBankTest` |
 | Dana Account Inquiry | `dana_account_inquiry_test` | `DanaAccountInquiryTest` | `DanaAccountInquiryTest` |
 | TopUp Status Inquiry | `transfer_to_dana_inquiry_status_test` | `TransferToDanaInquiryStatusTest` | `TransferToDanaInquiryStatusTest` |
+| Bank Transfer Status Inquiry | `transfer_to_bank_inquiry_status_test` | `TransferToBankInquiryStatusTest` | `TransferToBankInquiryStatusTest` |
 | Bank Account Inquiry | `bank_account_inquiry_test` | `BankAccountInquiryTest` | `BankAccountInquiryTest` |
 
 Use `./run-test.sh list <language> <module>` to see exact names in your checkout.

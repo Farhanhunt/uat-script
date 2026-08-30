@@ -61,6 +61,12 @@ def replace_template_values(data):
 def generate_partner_reference_no():
     return str(uuid4())
 
+
+def generate_payment_gateway_partner_reference_no(length=25):
+    """Random alphanumeric partner reference (≤25 chars) for PG QRIS sandbox validation."""
+    charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return "".join(random.choice(charset) for _ in range(length))
+
 def retry_test(attempts=3, delay_seconds=1):
     """
     Decorator that retries a test function (same as Go helper.RetryTest).

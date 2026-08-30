@@ -537,6 +537,38 @@ class Util
         }
     }
 
+    /**
+     * Retries API calls on inconsistent-request / transient server errors (same as Go helper.RetryOnInconsistentRequest).
+     */
+    public static function retryOnInconsistentRequest(callable $apiCall, int $maxAttempts = 3, int $delayMs = 2000)
+    {
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                return $apiCall();
+            } catch (\Exception $e) {
+                $lastException = $e;
+                $errorMsg = $e->getMessage();
+                $shouldRetry = (
+                    str_contains($errorMsg, '500') ||
+                    str_contains($errorMsg, 'General Error') ||
+                    str_contains($errorMsg, 'Internal Server Error')
+                ) && $attempt < $maxAttempts;
+
+                if (!$shouldRetry) {
+                    throw $e;
+                }
+
+                usleep($delayMs * 1000);
+            }
+        }
+
+        if ($lastException !== null) {
+            throw $lastException;
+        }
+    }
+
   public static function paymentCodeFromCreateOrderResponse(string $responseBody): string
   {
     $decoded = json_decode($responseBody, true);

@@ -51,13 +51,6 @@ def test_order_reference_number():
     print(f"\nCreating shared test order with reference number: {data_order[0]}")
     return data_order[0]
 
-@pytest.fixture(scope="module")
-def test_order_canceled_reference_number():
-    """Fixture that creates a test order once per module and shares the reference number"""
-    partner_reference_no = create_test_order_canceled()
-    print(f"\nCreating shared test order with reference number cancelllll: {partner_reference_no}")
-    return partner_reference_no
-
 @retry_on_inconsistent_request(max_retries=3, delay_seconds=2)
 def create_test_order_init():
     data_order = []
@@ -163,9 +156,10 @@ def test_query_payment_paid_order():
     assert_response(json_path_file, title_case, case_name, QueryPaymentResponse.to_json(api_response), {"partnerReferenceNo": test_order_paid_reference_number})
 
 @with_delay()
-def test_query_payment_canceled_order(test_order_canceled_reference_number):
+def test_query_payment_canceled_order():
     
-    """Should query the payment with status canceled (CANCELLED)"""    
+    """Should query the payment with status canceled (CANCELLED)"""
+    test_order_canceled_reference_number = create_test_order_canceled()
     # Query payment
     case_name = "QueryPaymentCanceledOrder"
     

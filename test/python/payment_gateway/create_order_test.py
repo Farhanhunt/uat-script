@@ -10,7 +10,7 @@ from dana.api_client import ApiClient
 from dana.exceptions import *
 from dana.merchant_management.v1 import MerchantManagementApi
 
-from helper.util import get_request, with_delay
+from helper.util import get_request, with_delay, retry_on_inconsistent_request, generate_payment_gateway_partner_reference_no
 from helper.api_helpers import execute_and_assert_api_error, get_headers_with_signature
 from helper.assertion import *
 
@@ -18,7 +18,7 @@ title_case = "CreateOrder"
 json_path_file = "resource/request/components/PaymentGateway.json"
 json_path_file_merchant_management = "resource/request/components/MerchantManagement.json"
 merchant_id = os.environ.get("MERCHANT_ID", "default_merchant_id")
-external_store_id = os.environ.get("EXTERNAL_SHOP_ID", "default_external_shop_id")
+external_store_id = os.environ.get("EXTERNAL_SHOP_ID", "")
 
 configuration = SnapConfiguration(
     api_key=AuthSettings(
@@ -98,19 +98,22 @@ def test_create_order_api_scenario():
     # Assert the API response
     assert_response(json_path_file, title_case, case_name, CreateOrderResponse.to_json(api_response), {"partnerReferenceNo": partner_reference_no})
 
-@pytest.mark.skip(reason="skipped by request: scenario CreateOrderNetworkPayPgQris")
 @with_delay()
+@retry_on_inconsistent_request(max_retries=3, delay_seconds=2)
 def test_create_order_network_pay_pg_qris():
     """Should create an order using API scenario with QRIS payment method"""
+    if not external_store_id:
+        pytest.skip("externalStoreId is required when payOption is NETWORK_PAY_PG_QRIS")
+
     case_name = "CreateOrderNetworkPayPgQris"
     
     # Get the request data from the JSON file
     json_dict = get_request(json_path_file, title_case, case_name)
     
-    # Set a unique partner reference number
-    partner_reference_no = generate_partner_reference_no()
+    # QRIS requires partnerReferenceNo ≤ 25 chars (UUID is 36)
+    partner_reference_no = generate_payment_gateway_partner_reference_no()
     json_dict["partnerReferenceNo"] = partner_reference_no
-    json_dict["validUpTo"] = (datetime.now().astimezone(timezone(timedelta(hours=7))) + timedelta(seconds=100)).strftime('%Y-%m-%dT%H:%M:%S+07:00')
+    json_dict["validUpTo"] = (datetime.now().astimezone(timezone(timedelta(hours=7))) + timedelta(seconds=600)).strftime('%Y-%m-%dT%H:%M:%S+07:00')
     json_dict["externalStoreId"] = external_store_id
 
     # Convert the request data to a CreateOrderRequest object

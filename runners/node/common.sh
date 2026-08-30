@@ -51,6 +51,13 @@ resolve_needs_playwright() {
                 fi
             fi
             ;;
+        payment_gateway)
+            caseNameLower=$(echo "$caseName" | tr '[:upper:]' '[:lower:]')
+            runPatternLower=$(echo "$runPattern" | tr '[:upper:]' '[:lower:]')
+            if echo "$caseNameLower $runPatternLower" | grep -Eq "refund_order|cancel_order|query_payment|automate|payment"; then
+                needs_playwright=true
+            fi
+            ;;
     esac
 
     echo "$needs_playwright"
