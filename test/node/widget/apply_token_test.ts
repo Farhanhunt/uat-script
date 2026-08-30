@@ -42,7 +42,7 @@ describe('ApplyToken Tests', () => {
         }
     });
 
-    test.skip('should fail to apply token with expired authcode', async () => {
+    test.skip('should fail to apply token with expired authcode (requires genuinely expired auth code)', async () => {
         const caseName = 'ApplyTokenFailExpiredAuthcode';
         const requestData: any = getRequest(jsonPathFile, titleCase, caseName);
         try {
@@ -87,38 +87,69 @@ describe('ApplyToken Tests', () => {
         } catch (e: any) { }
     });
 
-    test.skip('should fail to apply token with invalid mandatory fields', async () => {
-        const caseName = 'ApplyTokenFailInvalidMandatoryFields';
+    test('should fail to apply token with missing field', async () => {
+        const caseName = 'ApplyTokenFailMissingField';
         const requestData: any = getRequest(jsonPathFile, titleCase, caseName);
-        requestData.authCode = "aklsdkalskdw1232ds"; // Ensure authCode is present
+        requestData.authCode = 'test123';
 
         const customHeaders: Record<string, string> = {
-            'X-TIMESTAMP': '', // Use an invalid timestamp for testing
-        }
+            'X-TIMESTAMP': '',
+        };
+
         try {
-            const baseUrl: string = 'https://api.sandbox.dana.id';
-            const apiPath: string = '/v1.0/access-token/b2b2c.htm';
+            const baseUrl = 'https://api.sandbox.dana.id';
+            const apiPath = '/v1.0/access-token/b2b2c.htm';
 
             await executeManualApiRequest(
                 caseName,
-                "POST",
+                'POST',
                 baseUrl + apiPath,
                 apiPath,
                 requestData,
-                customHeaders
+                customHeaders,
             );
 
             fail('Expected an error but the API call succeeded');
         } catch (e: any) {
             if (Number(e.status) === 400) {
-                // Expected error for invalid mandatory fields
                 await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
+            } else if (e instanceof ResponseError) {
+                await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
+            } else {
+                throw e;
             }
-            else if (e instanceof ResponseError) {
-                // Expected error for invalid signature
-                fail("Expected unauthorized failed but got status code " + e.status);
-            }
-            else {
+        }
+    });
+
+    test('should fail to apply token with invalid field', async () => {
+        const caseName = 'ApplyTokenFailInvalidField';
+        const requestData: any = getRequest(jsonPathFile, titleCase, caseName);
+        requestData.authCode = 'test123';
+
+        const customHeaders: Record<string, string> = {
+            'X-TIMESTAMP': 'invalid-timestamp-format',
+        };
+
+        try {
+            const baseUrl = 'https://api.sandbox.dana.id';
+            const apiPath = '/v1.0/access-token/b2b2c.htm';
+
+            await executeManualApiRequest(
+                caseName,
+                'POST',
+                baseUrl + apiPath,
+                apiPath,
+                requestData,
+                customHeaders,
+            );
+
+            fail('Expected an error but the API call succeeded');
+        } catch (e: any) {
+            if (Number(e.status) === 400) {
+                await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
+            } else if (e instanceof ResponseError) {
+                await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
+            } else {
                 throw e;
             }
         }

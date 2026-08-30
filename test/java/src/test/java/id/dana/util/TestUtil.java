@@ -8,6 +8,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import id.dana.invoker.JSON;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -121,6 +124,12 @@ public final class TestUtil {
       String result = text;
       while (matcher.find()) {
         String varName = matcher.group(1);
+        if ("createdTime".equals(varName)) {
+          String formatted = ZonedDateTime.now(ZoneId.of("Asia/Jakarta"))
+              .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"));
+          result = result.replace(matcher.group(0), formatted);
+          continue;
+        }
         // Convert variable name to uppercase for environment variable lookup
         String envVarName = varName.toUpperCase();
         

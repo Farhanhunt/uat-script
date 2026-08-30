@@ -134,13 +134,62 @@ class ApplyOttTest extends TestCase
     }
 
     /**
-     * Should fail to apply OTT with invalid user status
+     * Should fail to apply OTT when customer account user status is abnormal (same as Go)
+     */
+    public function testApplyOttCustomerAccountUserStatusAbnormal(): void
+    {
+        Util::withDelay(function () {
+            $caseName = 'ApplyOttCustomerAccountUserStatusAbnormal';
+            $abnormalPhone = '0855100800';
+            $abnormalPin = '146838';
+
+            $authCode = OauthUtil::getAuthCode(
+                getenv('X_PARTNER_ID'),
+                null,
+                $abnormalPhone,
+                $abnormalPin,
+                null
+            );
+            $this->assertNotEmpty($authCode, 'Failed to obtain auth code for abnormal user');
+
+            $tokenJsonDict = Util::getRequest(
+                'resource/request/components/Widget.json',
+                'ApplyToken',
+                'ApplyTokenSuccess'
+            );
+            $tokenRequestObj = ObjectSerializer::deserialize(
+                $tokenJsonDict,
+                'Dana\Widget\v1\Model\ApplyTokenRequest'
+            );
+            $tokenRequestObj->setAuthCode($authCode);
+            $tokenResponse = self::$apiInstance->applyToken($tokenRequestObj);
+            $accessToken = json_decode($tokenResponse->__toString(), true)['accessToken'];
+
+            $jsonDict = Util::getRequest(self::$jsonPathFile, self::$titleCase, $caseName);
+            $jsonDict['additionalInfo']['accessToken'] = $accessToken;
+            $jsonDict['additionalInfo']['deviceId'] = self::$deviceId;
+            $requestObj = ObjectSerializer::deserialize(
+                $jsonDict,
+                'Dana\Widget\v1\Model\ApplyOTTRequest'
+            );
+
+            try {
+                self::$apiInstance->applyOTT($requestObj);
+                $this->fail('Expected ApiException was not thrown');
+            } catch (ApiException $e) {
+                Assertion::assertFailResponse(self::$jsonPathFile, self::$titleCase, $caseName, $e->getResponseBody());
+                $this->assertTrue(true);
+            }
+        });
+    }
+
+    /**
+     * @deprecated Wrong case name; use testApplyOttCustomerAccountUserStatusAbnormal
      */
     public function testApplyOttFailInvalidUserStatus(): void
     {
+        $this->markTestSkipped('Replaced by testApplyOttCustomerAccountUserStatusAbnormal (same as Go)');
 
-        $this->markTestSkipped('Scenario skipped because the result the same with testApplyOttFailTokenNotFound');
-        
         Util::withDelay(function () {
             $caseName = 'ApplyOttFailInvalidUserStatus';
             $jsonDict = Util::getRequest(

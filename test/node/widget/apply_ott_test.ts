@@ -174,6 +174,23 @@ describe('ApplyOtt Tests', () => {
         } catch (e: any) { }
     });
 
+    test('should fail to apply OTT with abnormal user account status', async () => {
+        const caseName = 'ApplyOttCustomerAccountUserStatusAbnormal';
+        const requestData: ApplyOTTRequest = getRequest<ApplyOTTRequest>(jsonPathFile, titleCase, caseName);
+        requestData.additionalInfo.accessToken = await generateApplyToken('0855100800', '146838');
+        requestData.additionalInfo.deviceId = deviceId;
+        try {
+            await dana.widgetApi.applyOTT(requestData);
+            fail('Expected an error but the API call succeeded');
+        } catch (e: any) {
+            if (e instanceof ResponseError) {
+                await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
+            } else {
+                fail('ApplyOTT abnormal user status test failed: ' + (e.message || e));
+            }
+        }
+    });
+
     test.skip('should fail to apply OTT with invalid user status', async () => {
         const caseName = 'ApplyOttFailInvalidUserStatus';
         const requestData: ApplyOTTRequest = getRequest<ApplyOTTRequest>(jsonPathFile, titleCase, caseName);

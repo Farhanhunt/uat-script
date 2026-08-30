@@ -1,15 +1,18 @@
 package id.dana.widget;
 
+import id.dana.interceptor.CustomHeaderInterceptor;
 import id.dana.invoker.Dana;
+import id.dana.invoker.auth.DanaAuth;
 import id.dana.invoker.model.DanaConfig;
+import id.dana.invoker.model.constant.DanaHeader;
 import id.dana.invoker.model.constant.EnvKey;
 import id.dana.invoker.model.enumeration.DanaEnvironment;
 import id.dana.util.ConfigUtil;
 import id.dana.util.TestUtil;
 import id.dana.widget.v1.api.WidgetApi;
 import id.dana.widget.v1.model.*;
+import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,9 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AccountUnbindingTest {
     private final static String USER_PIN = "181818";
@@ -134,6 +140,25 @@ public class AccountUnbindingTest {
         requestData.setAdditionalInfo(additionalInfo);
 
         AccountUnbindingResponse response = widgetApi.accountUnbinding(requestData);
+        TestUtil.assertResponse(jsonPathFile, titleCase, caseName, response, null);
+    }
+
+    @Test
+    void testAccountUnbindingInvalidFieldFormat() throws IOException {
+        Map<String, String> customHeaders = new HashMap<>();
+        String caseName = "AccountUnbindingInvalidFieldFormat";
+        AccountUnbindingRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
+                AccountUnbindingRequest.class);
+        requestData.setMerchantId(ConfigUtil.getConfig("MERCHANT_ID", ""));
+
+        customHeaders.put(DanaHeader.X_TIMESTAMP, "invalid-timestamp-format");
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new DanaAuth())
+                .addInterceptor(new CustomHeaderInterceptor(customHeaders))
+                .build();
+        WidgetApi apiWithCustomHeader = new WidgetApi(client);
+
+        AccountUnbindingResponse response = apiWithCustomHeader.accountUnbinding(requestData);
         TestUtil.assertResponse(jsonPathFile, titleCase, caseName, response, null);
     }
 }

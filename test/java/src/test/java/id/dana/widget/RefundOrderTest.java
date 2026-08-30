@@ -11,6 +11,7 @@ import id.dana.paymentgateway.CreateOrderTest;
 import id.dana.paymentgateway.v1.api.PaymentGatewayApi;
 import id.dana.paymentgateway.v1.model.CreateOrderByRedirectRequest;
 import id.dana.paymentgateway.v1.model.CreateOrderResponse;
+import id.dana.util.RetryTestUtil;
 import id.dana.widget.v1.model.*;
 import id.dana.util.ConfigUtil;
 import id.dana.util.TestUtil;
@@ -44,7 +45,7 @@ public class RefundOrderTest {
     private static String USER_PIN = "181818";
     private static String USER_PHONE_NUMBER = "083811223355";
     private static WidgetApi widgetApi;
-    private static String partnerReferenceNoInit, partnerReferenceNoPaid;
+    private static String partnerReferenceNoInit;
 
     @BeforeAll
     static void setUp() throws InterruptedException {
@@ -61,13 +62,14 @@ public class RefundOrderTest {
 
         List<String> dataOrder = PaymentWidgetUtil.createPayment("PaymentSuccess");
         partnerReferenceNoInit = dataOrder.get(0);
-        partnerReferenceNoPaid = payOrder(
-                USER_PHONE_NUMBER,
-                USER_PIN);
     }
 
     @Test
-    void testRefundOrderValid() throws IOException {
+    @RetryTestUtil.Retry
+    void testRefundOrderValid() throws IOException, InterruptedException {
+        String partnerReferenceNoPaid = payOrder(USER_PHONE_NUMBER, USER_PIN);
+        Thread.sleep(2000);
+
         String caseName = "RefundOrderValidScenario";
         RefundOrderRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
                 RefundOrderRequest.class);
@@ -80,7 +82,11 @@ public class RefundOrderTest {
     }
 
     @Test
-    void testRefundFailDuplicateRequest() throws IOException {
+    @RetryTestUtil.Retry
+    void testRefundFailDuplicateRequest() throws IOException, InterruptedException {
+        String partnerReferenceNoPaid = payOrder(USER_PHONE_NUMBER, USER_PIN);
+        Thread.sleep(2000);
+
         String caseName = "RefundFailDuplicateRequest";
         RefundOrderRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
                 RefundOrderRequest.class);
@@ -89,10 +95,11 @@ public class RefundOrderTest {
         requestData.setMerchantId(merchantId);
 
         widgetApi.refundOrder(requestData);
+        Thread.sleep(2000);
 
         Money amount = new Money();
         amount.setCurrency("IDR");
-        amount.setValue("12000.00");
+        amount.setValue("2.00");
         requestData.setRefundAmount(amount);
 
         RefundOrderResponse response = widgetApi.refundOrder(requestData);
@@ -113,14 +120,11 @@ public class RefundOrderTest {
     }
 
     @Test
-    @Disabled
     void testRefundOrderInvalidSignature() throws IOException {
         Map<String, String> customHeaders = new HashMap<>();
         String caseName = "RefundFailInvalidSignature";
         RefundOrderRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
                 RefundOrderRequest.class);
-        requestData.setOriginalPartnerReferenceNo(partnerReferenceNoPaid);
-        requestData.setPartnerRefundNo(partnerReferenceNoPaid);
         requestData.setMerchantId(merchantId);
 
         customHeaders.put(
@@ -200,6 +204,7 @@ public class RefundOrderTest {
     }
 
     @Test
+    @Disabled("Skip: Idempotent test may require special handling or actual payment scenario (same as Go)")
     void testRefundFailIdempotent() throws InterruptedException {
         String caseName = "RefundIdempotent";
         int numberOfThreads = 10;

@@ -3,6 +3,7 @@ package widget_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -64,69 +65,61 @@ func createTestWidgetPaymentForRefund() (string, error) {
 
 // RefundOrder
 func TestRefundOrderValidScenario(t *testing.T) {
-	t.Skip("Skip: Requires a paid order to refund, which needs complex setup with payment completion")
-	caseName := "RefundOrderValidScenario"
+	helper.RetryTest(t, 3, 1, func() error {
+		partnerReferenceNo, err := createTestWidgetPaymentPaid()
+		if err != nil {
+			return fmt.Errorf("failed to create paid widget payment: %w", err)
+		}
 
-	// Create a test payment first
-	partnerReferenceNo, err := createTestWidgetPaymentForRefund()
-	if err != nil {
-		t.Fatalf("Failed to create test widget payment: %v", err)
-	}
+		time.Sleep(2 * time.Second)
 
-	// Give time for the payment to be processed
-	time.Sleep(3 * time.Second)
+		caseName := "RefundOrderValidScenario"
+		jsonDict, err := helper.GetRequest(refundOrderJsonPath, refundOrderTitleCase, caseName)
+		if err != nil {
+			return fmt.Errorf("failed to get request data: %w", err)
+		}
 
-	// Get the request data from JSON
-	jsonDict, err := helper.GetRequest(refundOrderJsonPath, refundOrderTitleCase, caseName)
-	if err != nil {
-		t.Fatalf("Failed to get request data: %v", err)
-	}
+		jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+		jsonDict["partnerRefundNo"] = partnerReferenceNo
+		jsonDict["merchantId"] = helper.TestConfig.MerchantID
 
-	// Set the partner reference number from the created payment
-	jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
-	jsonDict["partnerRefundNo"] = partnerReferenceNo
+		jsonBytes, err := json.Marshal(jsonDict)
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
 
-	// Marshal to JSON and unmarshal to widget SDK struct
-	jsonBytes, err := json.Marshal(jsonDict)
-	if err != nil {
-		t.Fatalf("Failed to marshal JSON: %v", err)
-	}
+		var request widget.RefundOrderRequest
+		if err = json.Unmarshal(jsonBytes, &request); err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
 
-	var request widget.RefundOrderRequest
-	err = json.Unmarshal(jsonBytes, &request)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
+		ctx := context.Background()
+		apiResponse, httpResponse, err := helper.ApiClient.WidgetAPI.RefundOrder(ctx).RefundOrderRequest(request).Execute()
+		if err != nil {
+			return fmt.Errorf("API request failed: %w", err)
+		}
+		defer httpResponse.Body.Close()
 
-	// Execute the SDK API call
-	ctx := context.Background()
-	apiResponse, httpResponse, err := helper.ApiClient.WidgetAPI.RefundOrder(ctx).RefundOrderRequest(request).Execute()
-	if err != nil {
-		t.Fatalf("API request failed: %v", err)
-	}
-	defer httpResponse.Body.Close()
+		responseJSON, err := apiResponse.MarshalJSON()
+		if err != nil {
+			return fmt.Errorf("failed to convert response to JSON: %w", err)
+		}
 
-	// Convert the response to JSON for assertion
-	responseJSON, err := apiResponse.MarshalJSON()
-	if err != nil {
-		t.Fatalf("Failed to convert response to JSON: %v", err)
-	}
+		variableDict := map[string]interface{}{
+			"partnerReferenceNo": partnerReferenceNo,
+		}
 
-	// Assert the success response
-	variableDict := map[string]interface{}{
-		"partnerReferenceNo": partnerReferenceNo,
-	}
-
-	err = helper.AssertResponse(
-		refundOrderJsonPath,
-		refundOrderTitleCase,
-		caseName,
-		string(responseJSON),
-		variableDict,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
+		if err = helper.AssertResponse(
+			refundOrderJsonPath,
+			refundOrderTitleCase,
+			caseName,
+			string(responseJSON),
+			variableDict,
+		); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 func TestRefundInProcess(t *testing.T) {
 	t.Skip("Skip: Requires a paid order to refund, which needs complex setup with payment completion")
@@ -182,46 +175,62 @@ func TestRefundInProcess(t *testing.T) {
 }
 
 func TestRefundFailDuplicateRequest(t *testing.T) {
-	t.Skip("Skip: API returns 4035815 (Transaction Not Permitted) instead of expected 4045818 (Inconsistent Request) - API mock limitation")
-	caseName := "RefundFailDuplicateRequest"
-
-	// Get the request data from JSON
-	jsonDict, err := helper.GetRequest(refundOrderJsonPath, refundOrderTitleCase, caseName)
-	if err != nil {
-		t.Fatalf("Failed to get request data: %v", err)
-	}
-
-	// Marshal to JSON and unmarshal to widget SDK struct
-	jsonBytes, err := json.Marshal(jsonDict)
-	if err != nil {
-		t.Fatalf("Failed to marshal JSON: %v", err)
-	}
-
-	var request widget.RefundOrderRequest
-	err = json.Unmarshal(jsonBytes, &request)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
-
-	// Execute the SDK API call and expect error response
-	ctx := context.Background()
-	_, httpResponse, err := helper.ApiClient.WidgetAPI.RefundOrder(ctx).RefundOrderRequest(request).Execute()
-	if err != nil {
-		// This is expected for error test cases
-		variableDict := map[string]interface{}{
-			"partnerReferenceNo": jsonDict["originalPartnerReferenceNo"],
-		}
-
-		// Assert the error response matches expected error pattern
-		err = helper.AssertFailResponse(refundOrderJsonPath, refundOrderTitleCase, caseName, httpResponse, variableDict)
+	helper.RetryTest(t, 3, 1, func() error {
+		partnerReferenceNo, err := createTestWidgetPaymentPaid()
 		if err != nil {
-			t.Fatal(err)
+			return fmt.Errorf("failed to create paid widget payment: %w", err)
 		}
-	} else {
-		// If no error occurred, this is unexpected for error test cases
-		defer httpResponse.Body.Close()
-		t.Fatalf("Expected error for case %s but API call succeeded", caseName)
-	}
+
+		time.Sleep(2 * time.Second)
+
+		caseName := "RefundFailDuplicateRequest"
+		jsonDict, err := helper.GetRequest(refundOrderJsonPath, refundOrderTitleCase, caseName)
+		if err != nil {
+			return fmt.Errorf("failed to get request data: %w", err)
+		}
+
+		jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+		jsonDict["partnerRefundNo"] = partnerReferenceNo
+		jsonDict["merchantId"] = helper.TestConfig.MerchantID
+
+		jsonBytes, err := json.Marshal(jsonDict)
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+
+		var request widget.RefundOrderRequest
+		if err = json.Unmarshal(jsonBytes, &request); err != nil {
+			return fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
+
+		ctx := context.Background()
+
+		// First refund with this partnerRefundNo — should succeed.
+		_, firstHTTP, err := helper.ApiClient.WidgetAPI.RefundOrder(ctx).RefundOrderRequest(request).Execute()
+		if err != nil {
+			return fmt.Errorf("first refund should succeed before duplicate attempt: %w", err)
+		}
+		firstHTTP.Body.Close()
+
+		time.Sleep(2 * time.Second)
+
+		// Same partnerRefundNo, different refundAmount → Inconsistent Request (4045818).
+		request.SetRefundAmount(widget.Money{Value: "2.00", Currency: "IDR"})
+
+		_, httpResponse, err := helper.ApiClient.WidgetAPI.RefundOrder(ctx).RefundOrderRequest(request).Execute()
+		if err != nil {
+			variableDict := map[string]interface{}{
+				"partnerReferenceNo": partnerReferenceNo,
+			}
+			if err = helper.AssertFailResponse(refundOrderJsonPath, refundOrderTitleCase, caseName, httpResponse, variableDict); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		httpResponse.Body.Close()
+		return fmt.Errorf("expected duplicate refund error for case %s but API call succeeded", caseName)
+	})
 }
 func TestRefundFailOrderNotPaid(t *testing.T) {
 	caseName := "RefundFailOrderNotPaid"

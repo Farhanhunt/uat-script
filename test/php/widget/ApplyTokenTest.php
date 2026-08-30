@@ -195,4 +195,94 @@ class ApplyTokenTest extends TestCase
             }
         });
     }
+
+    /**
+     * Should fail when mandatory field (X-TIMESTAMP) is missing.
+     */
+    public function testApplyTokenFailMissingField(): void
+    {
+        Util::withDelay(function () {
+            $caseName = 'ApplyTokenFailMissingField';
+            $jsonDict = Util::getRequest(
+                self::$jsonPathFile,
+                self::$titleCase,
+                $caseName
+            );
+            $jsonDict['authCode'] = 'test123';
+
+            $headers = Util::getHeadersWithSignature(
+                'POST',
+                '/v1.0/access-token/b2b2c.htm',
+                $jsonDict,
+                false
+            );
+            $headers['X-TIMESTAMP'] = '';
+            $headers['X-CLIENT-KEY'] = self::$partnerId;
+
+            try {
+                Util::executeApiRequest(
+                    'POST',
+                    'https://api.sandbox.dana.id/v1.0/access-token/b2b2c.htm',
+                    $headers,
+                    $jsonDict
+                );
+                $this->fail('Expected ApiException for missing field but the API call succeeded');
+            } catch (ApiException $e) {
+                $this->assertEquals(400, $e->getCode(), "Expected HTTP 400 Bad Request for missing field, got {$e->getCode()}");
+                Assertion::assertFailResponse(
+                    self::$jsonPathFile,
+                    self::$titleCase,
+                    $caseName,
+                    (string)$e->getResponseBody()
+                );
+            } catch (Exception $e) {
+                throw $e;
+            }
+        });
+    }
+
+    /**
+     * Should fail when mandatory field format is invalid.
+     */
+    public function testApplyTokenFailInvalidField(): void
+    {
+        Util::withDelay(function () {
+            $caseName = 'ApplyTokenFailInvalidField';
+            $jsonDict = Util::getRequest(
+                self::$jsonPathFile,
+                self::$titleCase,
+                $caseName
+            );
+            $jsonDict['authCode'] = 'test123';
+
+            $headers = Util::getHeadersWithSignature(
+                'POST',
+                '/v1.0/access-token/b2b2c.htm',
+                $jsonDict,
+                true,
+                true
+            );
+            $headers['X-CLIENT-KEY'] = self::$partnerId;
+
+            try {
+                Util::executeApiRequest(
+                    'POST',
+                    'https://api.sandbox.dana.id/v1.0/access-token/b2b2c.htm',
+                    $headers,
+                    $jsonDict
+                );
+                $this->fail('Expected ApiException for invalid field but the API call succeeded');
+            } catch (ApiException $e) {
+                $this->assertEquals(400, $e->getCode(), "Expected HTTP 400 Bad Request for invalid field, got {$e->getCode()}");
+                Assertion::assertFailResponse(
+                    self::$jsonPathFile,
+                    self::$titleCase,
+                    $caseName,
+                    (string)$e->getResponseBody()
+                );
+            } catch (Exception $e) {
+                throw $e;
+            }
+        });
+    }
 }

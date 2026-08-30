@@ -76,7 +76,7 @@ public class ApplyToken {
     }
 
     @Test
-    @Disabled
+    @Disabled("Skipped: requires a genuinely expired auth code (not reuse of consumed code)")
     void testApplyTokenFailExpiredAuthcode() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SignatureException, InvalidKeyException {
         String authCode = OauthUtil.getAuthCode(
                 ConfigUtil.getConfig("X_PARTNER_ID", ""),
@@ -151,6 +151,44 @@ public class ApplyToken {
 
         ApplyTokenResponse response = apiWithCustomHeader.applyToken(requestData);
         TestUtil.assertFailResponse(jsonPathFile, titleCase, caseName, response, variableDict);
+    }
+
+    @Test
+    void testApplyTokenFailMissingField() throws IOException {
+        Map<String, String> customHeaders = new HashMap<>();
+        String caseName = "ApplyTokenFailMissingField";
+        ApplyTokenAuthorizationCodeRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
+                ApplyTokenAuthorizationCodeRequest.class);
+        requestData.setAuthCode("test123");
+
+        customHeaders.put(DanaHeader.X_TIMESTAMP, "");
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new DanaAuth())
+                .addInterceptor(new CustomHeaderInterceptor(customHeaders))
+                .build();
+        WidgetApi apiWithCustomHeader = new WidgetApi(client);
+
+        ApplyTokenResponse response = apiWithCustomHeader.applyToken(requestData);
+        TestUtil.assertResponse(jsonPathFile, titleCase, caseName, response, null);
+    }
+
+    @Test
+    void testApplyTokenFailInvalidField() throws IOException {
+        Map<String, String> customHeaders = new HashMap<>();
+        String caseName = "ApplyTokenFailInvalidField";
+        ApplyTokenAuthorizationCodeRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
+                ApplyTokenAuthorizationCodeRequest.class);
+        requestData.setAuthCode("test123");
+
+        customHeaders.put(DanaHeader.X_TIMESTAMP, "invalid-timestamp-format");
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new DanaAuth())
+                .addInterceptor(new CustomHeaderInterceptor(customHeaders))
+                .build();
+        WidgetApi apiWithCustomHeader = new WidgetApi(client);
+
+        ApplyTokenResponse response = apiWithCustomHeader.applyToken(requestData);
+        TestUtil.assertResponse(jsonPathFile, titleCase, caseName, response, null);
     }
 
     public static String applyToken(String authCode) {

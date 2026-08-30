@@ -34,8 +34,6 @@ def generate_partner_reference_no():
     return str(uuid4())
 
 def get_access_token(phone_number=None, pin=None):
-    if os.environ.get("CI") == "true":
-        pytest.skip("Skipped in CI/CD")
     auth_code = asyncio.run(automate_oauth(phone_number=phone_number, pin=pin))
     print(auth_code)
     access_token = apply_token(auth_code)
@@ -51,8 +49,6 @@ def test_access_token_user_abnormal():
 
 @with_delay()
 def test_apply_ott_success(test_access_token_success):
-    if os.environ.get("CI") == "true":
-        pytest.skip("Skipped in CI/CD")
     case_name = "ApplyOttSuccess"
     access_token = test_access_token_success
     json_dict = get_request(json_path_file, title_case, case_name)
@@ -82,8 +78,6 @@ def test_apply_ott_fail_token_not_found():
         
 @with_delay()
 def test_apply_ott_fail_token_user_abnormal(test_access_token_user_abnormal):
-    if os.environ.get("CI") == "true":
-        pytest.skip("Skipped in CI/CD")
     case_name = "ApplyOttCustomerAccountUserStatusAbnormal"
     json_dict = get_request(json_path_file, title_case, case_name)
     applyOTTRequestAdditionalInfo = ApplyOTTRequestAdditionalInfo.from_dict(json_dict.get("additionalInfo", {}))
@@ -106,4 +100,4 @@ def apply_token(auth_code):
     # Create the request object from the JSON dictionary
     request_obj = ApplyTokenAuthorizationCodeRequest.from_dict(json_dict)
     response = api_instance.apply_token(request_obj)
-    return response.accessToken
+    return response.access_token

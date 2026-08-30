@@ -263,4 +263,4 @@ def apply_token(auth_code):
     # Create the request object from the JSON dictionary
     request_obj = ApplyTokenAuthorizationCodeRequest.from_dict(json_dict)
     response = api_instance.apply_token(request_obj)
-    return response.accessToken
+    return response.access_token

@@ -64,6 +64,46 @@ func createTestWidgetPayment() (string, error) {
 	return result.(string), nil
 }
 
+// createTestWidgetPaymentPaying creates a widget payment using PaymentPaying fixture for PAYING query status.
+func createTestWidgetPaymentPaying() (string, error) {
+	var partnerReferenceNo string
+	result, err := helper.RetryOnInconsistentRequest(func() (interface{}, error) {
+		caseName := "PaymentPaying"
+		jsonDict, err := helper.GetRequest(queryOrderJsonPath, paymentForQueryTitleCase, caseName)
+		if err != nil {
+			return "", err
+		}
+
+		partnerReferenceNo = uuid.New().String()
+		jsonDict["partnerReferenceNo"] = partnerReferenceNo
+		jsonDict["merchantId"] = helper.TestConfig.MerchantID
+		jsonDict["validUpTo"] = helper.GenerateFormattedDate(900, 7)
+
+		jsonBytes, err := json.Marshal(jsonDict)
+		if err != nil {
+			return "", err
+		}
+
+		var request widget.WidgetPaymentRequest
+		if err = json.Unmarshal(jsonBytes, &request); err != nil {
+			return "", err
+		}
+
+		ctx := context.Background()
+		_, httpResponse, err := helper.ApiClient.WidgetAPI.WidgetPayment(ctx).WidgetPaymentRequest(request).Execute()
+		if err != nil {
+			return "", err
+		}
+		defer httpResponse.Body.Close()
+
+		return partnerReferenceNo, nil
+	}, 3, 2*time.Second)
+	if err != nil {
+		return "", err
+	}
+	return result.(string), nil
+}
+
 // createTestWidgetPaymentCanceled creates a test widget payment and then cancels it to achieve canceled status
 func createTestWidgetPaymentCanceled() (string, error) {
 	var partnerReferenceNo string
@@ -148,7 +188,13 @@ func createTestWidgetPaymentCanceled() (string, error) {
 
 // QueryOrder
 func TestQueryOrderSuccessPaid(t *testing.T) {
-	t.Skip("Skip: API returns 404 Not Found - Widget QueryPayment API may not support this scenario or requires pre-existing orders")
+	partnerReferenceNo, err := createTestWidgetPaymentPaid()
+	if err != nil {
+		t.Fatalf("Failed to create test widget payment (paid): %v", err)
+	}
+
+	time.Sleep(2 * time.Second)
+
 	caseName := "QueryOrderSuccessPaid"
 
 	// Get the request data from JSON
@@ -156,6 +202,9 @@ func TestQueryOrderSuccessPaid(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get request data: %v", err)
 	}
+
+	jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+	jsonDict["merchantId"] = helper.TestConfig.MerchantID
 
 	// Marshal to JSON and unmarshal to widget SDK struct for type safety
 	jsonBytes, err := json.Marshal(jsonDict)
@@ -187,7 +236,7 @@ func TestQueryOrderSuccessPaid(t *testing.T) {
 
 	// Assert the success response
 	variableDict := map[string]interface{}{
-		"originalPartnerReferenceNo": jsonDict["originalPartnerReferenceNo"],
+		"originalPartnerReferenceNo": partnerReferenceNo,
 	}
 
 	err = helper.AssertResponse(
@@ -281,117 +330,50 @@ func TestQueryOrderSuccessInitiated(t *testing.T) {
 	}
 }
 func TestQueryOrderSuccessPaying(t *testing.T) {
-	t.Skip("Skip: API returns 404 Not Found - Widget QueryPayment API may not support this scenario or requires pre-existing orders")
-	caseName := "QueryOrderSuccessPaying"
-
-	// Get the request data from JSON
-	jsonDict, err := helper.GetRequest(queryOrderJsonPath, queryOrderTitleCase, caseName)
+	partnerReferenceNo, err := createTestWidgetPaymentPaying()
 	if err != nil {
-		t.Fatalf("Failed to get request data: %v", err)
+		t.Fatalf("Failed to create test widget payment (paying): %v", err)
 	}
 
-	// Marshal to JSON and unmarshal to widget SDK struct for type safety
-	jsonBytes, err := json.Marshal(jsonDict)
-	if err != nil {
-		t.Fatalf("Failed to marshal JSON: %v", err)
-	}
-
-	var request widget.QueryPaymentRequest
-	err = json.Unmarshal(jsonBytes, &request)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal JSON: %v", err)
-	}
-
-	// Execute the SDK API call with success expectation
-	ctx := context.Background()
-
-	// Make the API call using the Widget SDK
-	apiResponse, httpResponse, err := helper.ApiClient.WidgetAPI.QueryPayment(ctx).QueryPaymentRequest(request).Execute()
-	if err != nil {
-		t.Fatalf("API request failed: %v", err)
-	}
-	defer httpResponse.Body.Close()
-
-	// Convert the response to JSON for assertion
-	responseJSON, err := apiResponse.MarshalJSON()
-	if err != nil {
-		t.Fatalf("Failed to convert response to JSON: %v", err)
-	}
-
-	// Assert the success response
-	variableDict := map[string]interface{}{
-		"originalPartnerReferenceNo": jsonDict["originalPartnerReferenceNo"],
-	}
-
-	err = helper.AssertResponse(
-		queryOrderJsonPath,
-		queryOrderTitleCase,
-		caseName,
-		string(responseJSON),
-		variableDict,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-func TestQueryOrderSuccessCancelled(t *testing.T) {
-	// Create a test widget payment and cancel it
-	partnerReferenceNo, err := createTestWidgetPaymentCanceled()
-	if err != nil {
-		t.Fatalf("Failed to create and cancel test widget payment: %v", err)
-	}
-
-	// Give time for the cancellation to be processed
 	time.Sleep(2 * time.Second)
 
-	// Now query the cancelled order
-	caseName := "QueryOrderSuccessCancelled"
+	caseName := "QueryOrderSuccessPaying"
 
-	// Get the request data from JSON
 	jsonDict, err := helper.GetRequest(queryOrderJsonPath, queryOrderTitleCase, caseName)
 	if err != nil {
 		t.Fatalf("Failed to get request data: %v", err)
 	}
 
-	// Set the correct partner reference number
 	jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+	jsonDict["merchantId"] = helper.TestConfig.MerchantID
 
-	// Marshal to JSON and unmarshal to widget SDK struct for type safety
 	jsonBytes, err := json.Marshal(jsonDict)
 	if err != nil {
 		t.Fatalf("Failed to marshal JSON: %v", err)
 	}
 
 	var request widget.QueryPaymentRequest
-	err = json.Unmarshal(jsonBytes, &request)
-	if err != nil {
+	if err = json.Unmarshal(jsonBytes, &request); err != nil {
 		t.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
 
-	// Execute the SDK API call with success expectation
 	ctx := context.Background()
-
-	// Make the API call using the Widget SDK
 	apiResponse, httpResponse, err := helper.ApiClient.WidgetAPI.QueryPayment(ctx).QueryPaymentRequest(request).Execute()
 	if err != nil {
 		t.Fatalf("API request failed: %v", err)
 	}
 	defer httpResponse.Body.Close()
 
-	// Convert the response to JSON for assertion
 	responseJSON, err := apiResponse.MarshalJSON()
 	if err != nil {
 		t.Fatalf("Failed to convert response to JSON: %v", err)
 	}
 
-	// For success scenarios, just verify the essential fields
 	response := make(map[string]interface{})
-	err = json.Unmarshal(responseJSON, &response)
-	if err != nil {
+	if err = json.Unmarshal(responseJSON, &response); err != nil {
 		t.Fatalf("Failed to unmarshal response JSON: %v", err)
 	}
 
-	// Check essential fields
 	if response["responseCode"] != "2005500" {
 		t.Errorf("Expected responseCode 2005500, got %v", response["responseCode"])
 	}
@@ -401,57 +383,113 @@ func TestQueryOrderSuccessCancelled(t *testing.T) {
 	if response["originalPartnerReferenceNo"] != partnerReferenceNo {
 		t.Errorf("Expected originalPartnerReferenceNo %s, got %v", partnerReferenceNo, response["originalPartnerReferenceNo"])
 	}
-
-	// Check for CANCELLED status which indicates cancelled
-	if additionalInfo, ok := response["additionalInfo"].(map[string]interface{}); ok {
-		if statusDetail, ok := additionalInfo["statusDetail"].(map[string]interface{}); ok {
-			if acquirementStatus, ok := statusDetail["acquirementStatus"].(string); ok {
-				if acquirementStatus != "CANCELLED" {
-					t.Errorf("Expected acquirementStatus 'CANCELLED', got %v", acquirementStatus)
-				}
-			}
-		}
+	if status, ok := response["latestTransactionStatus"].(string); !ok || status != "02" {
+		t.Errorf("Expected latestTransactionStatus '02', got %v", response["latestTransactionStatus"])
+	}
+	if desc, ok := response["transactionStatusDesc"].(string); !ok || desc != "PAYING" {
+		t.Errorf("Expected transactionStatusDesc 'PAYING', got %v", response["transactionStatusDesc"])
 	}
 }
-func TestQueryOrderFailInvalidField(t *testing.T) {
-	caseName := "QueryOrderFailInvalidField"
+func TestQueryOrderSuccessCancelled(t *testing.T) {
+	partnerReferenceNo, err := createTestWidgetPaymentCanceled()
+	if err != nil {
+		t.Fatalf("Failed to create and cancel test widget payment: %v", err)
+	}
 
-	// Get the request data from JSON
+	time.Sleep(2 * time.Second)
+
+	caseName := "QueryOrderSuccessCancelled"
+
 	jsonDict, err := helper.GetRequest(queryOrderJsonPath, queryOrderTitleCase, caseName)
 	if err != nil {
 		t.Fatalf("Failed to get request data: %v", err)
 	}
 
-	// Marshal to JSON and unmarshal to widget SDK struct
+	jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+	jsonDict["merchantId"] = helper.TestConfig.MerchantID
+
 	jsonBytes, err := json.Marshal(jsonDict)
 	if err != nil {
 		t.Fatalf("Failed to marshal JSON: %v", err)
 	}
 
 	var request widget.QueryPaymentRequest
-	err = json.Unmarshal(jsonBytes, &request)
-	if err != nil {
+	if err = json.Unmarshal(jsonBytes, &request); err != nil {
 		t.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
 
-	// Execute the API call with custom headers to trigger invalid field error
+	ctx := context.Background()
+	apiResponse, httpResponse, err := helper.ApiClient.WidgetAPI.QueryPayment(ctx).QueryPaymentRequest(request).Execute()
+	if err != nil {
+		t.Fatalf("API request failed: %v", err)
+	}
+	defer httpResponse.Body.Close()
+
+	responseJSON, err := apiResponse.MarshalJSON()
+	if err != nil {
+		t.Fatalf("Failed to convert response to JSON: %v", err)
+	}
+
+	response := make(map[string]interface{})
+	if err = json.Unmarshal(responseJSON, &response); err != nil {
+		t.Fatalf("Failed to unmarshal response JSON: %v", err)
+	}
+
+	if response["responseCode"] != "2005500" {
+		t.Errorf("Expected responseCode 2005500, got %v", response["responseCode"])
+	}
+	if response["responseMessage"] != "Successful" {
+		t.Errorf("Expected responseMessage 'Successful', got %v", response["responseMessage"])
+	}
+	if response["originalPartnerReferenceNo"] != partnerReferenceNo {
+		t.Errorf("Expected originalPartnerReferenceNo %s, got %v", partnerReferenceNo, response["originalPartnerReferenceNo"])
+	}
+	if status, ok := response["latestTransactionStatus"].(string); !ok || status != "05" {
+		t.Errorf("Expected latestTransactionStatus '05', got %v", response["latestTransactionStatus"])
+	}
+	if desc, ok := response["transactionStatusDesc"].(string); !ok || desc != "CANCELLED" {
+		t.Errorf("Expected transactionStatusDesc 'CANCELLED', got %v", response["transactionStatusDesc"])
+	}
+}
+func TestQueryOrderFailInvalidField(t *testing.T) {
+	caseName := "QueryOrderFailInvalidField"
+
+	partnerReferenceNo, err := createTestWidgetPayment()
+	if err != nil {
+		t.Fatalf("Failed to create test widget payment: %v", err)
+	}
+
+	jsonDict, err := helper.GetRequest(queryOrderJsonPath, queryOrderTitleCase, caseName)
+	if err != nil {
+		t.Fatalf("Failed to get request data: %v", err)
+	}
+
+	jsonDict["originalPartnerReferenceNo"] = partnerReferenceNo
+	jsonDict["merchantId"] = helper.TestConfig.MerchantID
+
+	jsonBytes, err := json.Marshal(jsonDict)
+	if err != nil {
+		t.Fatalf("Failed to marshal JSON: %v", err)
+	}
+
+	var request widget.QueryPaymentRequest
+	if err = json.Unmarshal(jsonBytes, &request); err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
 	ctx := context.Background()
 	endpoint := "https://api.sandbox.dana.id/v1.0/debit/status.htm"
 	resourcePath := "/v1.0/debit/status.htm"
 
-	// Create custom headers with malformed timestamp format (not RFC3339)
-	// This should trigger "Invalid Field Format X-TIMESTAMP" error
 	customHeaders := map[string]string{
 		"X-TIMESTAMP": "invalid-timestamp-format",
 	}
 
-	// Variable dictionary for assertions
 	variableDict := map[string]interface{}{
-		"originalPartnerReferenceNo": jsonDict["originalPartnerReferenceNo"],
+		"originalPartnerReferenceNo": partnerReferenceNo,
 	}
 
-	// Execute the request and assert error response
-	err = helper.ExecuteAndAssertErrorResponse(
+	if err = helper.ExecuteAndAssertErrorResponse(
 		t,
 		ctx,
 		&request,
@@ -463,8 +501,7 @@ func TestQueryOrderFailInvalidField(t *testing.T) {
 		caseName,
 		customHeaders,
 		variableDict,
-	)
-	if err != nil {
+	); err != nil {
 		t.Fatal(err)
 	}
 }

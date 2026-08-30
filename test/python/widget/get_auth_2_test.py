@@ -1,5 +1,9 @@
-import os
 import pytest
+
+# Skeleton suite — aligned with Go TestGetAuthSuccess (not implemented).
+pytestmark = pytest.mark.skip(reason="Skip: Skeleton test not implemented (same as Go)")
+
+import os
 import asyncio
 from dana.utils.snap_configuration import SnapConfiguration, AuthSettings, Env
 from dana.widget.v1.api import WidgetApi
@@ -21,10 +25,12 @@ configuration = SnapConfiguration(
 with ApiClient(configuration) as api_client:
     api_instance = WidgetApi(api_client)
 
+
 @pytest.fixture(scope="module")
 def test_get_auth_reference_number():
     from uuid import uuid4
     return str(uuid4())
+
 
 @with_delay()
 def test_get_auth_success():

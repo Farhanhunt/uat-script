@@ -163,6 +163,82 @@ func TestApplyTokenFailInvalidSignature(t *testing.T) {
 	)
 }
 
+func TestApplyTokenFailMissingField(t *testing.T) {
+	caseName := "ApplyTokenFailMissingField"
+
+	jsonDict, err := helper.GetRequest(helper.TestConfig.JsonWidgetPath, widgetApplyTokenCase, caseName)
+	if err != nil {
+		t.Fatalf("Failed to get request data: %v", err)
+	}
+	jsonDict["authCode"] = "test123"
+
+	authCodeReq := widget.NewApplyTokenAuthorizationCodeRequest("AUTHORIZATION_CODE", "test123")
+	applyTokenRequestValue := widget.ApplyTokenAuthorizationCodeRequestAsApplyTokenRequest(authCodeReq)
+	applyTokenRequest := &applyTokenRequestValue
+
+	ctx := context.Background()
+	endpoint := "https://api.sandbox.dana.id/v1.0/access-token/b2b2c.htm"
+	resourcePath := "v1.0/access-token/b2b2c.htm"
+
+	customHeaders := map[string]string{
+		"X-TIMESTAMP": "",
+	}
+
+	if err = helper.ExecuteAndAssertErrorResponse(
+		t,
+		ctx,
+		applyTokenRequest,
+		"POST",
+		endpoint,
+		resourcePath,
+		helper.TestConfig.JsonWidgetPath,
+		widgetApplyTokenCase,
+		caseName,
+		customHeaders,
+		nil,
+	); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestApplyTokenFailInvalidField(t *testing.T) {
+	caseName := "ApplyTokenFailInvalidField"
+
+	jsonDict, err := helper.GetRequest(helper.TestConfig.JsonWidgetPath, widgetApplyTokenCase, caseName)
+	if err != nil {
+		t.Fatalf("Failed to get request data: %v", err)
+	}
+	jsonDict["authCode"] = "test123"
+
+	authCodeReq := widget.NewApplyTokenAuthorizationCodeRequest("AUTHORIZATION_CODE", "test123")
+	applyTokenRequestValue := widget.ApplyTokenAuthorizationCodeRequestAsApplyTokenRequest(authCodeReq)
+	applyTokenRequest := &applyTokenRequestValue
+
+	ctx := context.Background()
+	endpoint := "https://api.sandbox.dana.id/v1.0/access-token/b2b2c.htm"
+	resourcePath := "v1.0/access-token/b2b2c.htm"
+
+	customHeaders := map[string]string{
+		"X-TIMESTAMP": "invalid-timestamp-format",
+	}
+
+	if err = helper.ExecuteAndAssertErrorResponse(
+		t,
+		ctx,
+		applyTokenRequest,
+		"POST",
+		endpoint,
+		resourcePath,
+		helper.TestConfig.JsonWidgetPath,
+		widgetApplyTokenCase,
+		caseName,
+		customHeaders,
+		nil,
+	); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestApplyTokenFailAuthcodeUsed(t *testing.T) {
 	helper.RetryTest(t, 3, 1, func() error {
 		caseName := "ApplyTokenFailAuthcodeUsed"

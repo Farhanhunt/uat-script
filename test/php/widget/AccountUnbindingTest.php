@@ -190,12 +190,10 @@ class AccountUnbindingTest extends TestCase
     }
 
     /**
-     * @skip
-     * Should give fail response for invalid account unbinding scenario
+     * Should fail with invalid field format (4000901).
      */
     public function testAccountUnbindingInvalidFieldFormat(): void
     {
-        $this->markTestSkipped('Widget scenario skipped by automation.');
         Util::withDelay(function() {
             $caseName = 'AccountUnbindingInvalidFieldFormat';
             $jsonDict = Util::getRequest(
@@ -203,14 +201,26 @@ class AccountUnbindingTest extends TestCase
                 self::$titleCase,
                 $caseName
             );
-            $requestObj = ObjectSerializer::deserialize(
+            $jsonDict['merchantId'] = self::$merchantId;
+
+            $headers = Util::getHeadersWithSignature(
+                'POST',
+                '/v1.0/registration-account-unbinding.htm',
                 $jsonDict,
-                'Dana\Widget\v1\Model\AccountUnbindingRequest'
+                true,
+                true
             );
+
             try {
-                self::$apiInstance->accountUnbinding($requestObj);
+                Util::executeApiRequest(
+                    'POST',
+                    'https://api.sandbox.dana.id/v1.0/registration-account-unbinding.htm',
+                    $headers,
+                    $jsonDict
+                );
                 $this->fail('Expected ApiException was not thrown');
             } catch (ApiException $e) {
+                $this->assertEquals(400, $e->getCode(), "Expected HTTP 400 Bad Request for invalid field format, got {$e->getCode()}");
                 Assertion::assertFailResponse(self::$jsonPathFile, self::$titleCase, $caseName, $e->getResponseBody());
                 $this->assertTrue(true);
             }

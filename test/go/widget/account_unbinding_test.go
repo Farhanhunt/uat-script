@@ -87,6 +87,51 @@ func TestAccountUnbindSuccess(t *testing.T) {
 	}
 }
 
+func TestAccountUnbindingInvalidFieldFormat(t *testing.T) {
+	caseName := "AccountUnbindingInvalidFieldFormat"
+
+	jsonDict, err := helper.GetRequest(helper.TestConfig.JsonWidgetPath, widgetAccountUnbindingCase, caseName)
+	if err != nil {
+		t.Fatalf("Failed to get request data: %v", err)
+	}
+
+	jsonDict["merchantId"] = helper.TestConfig.MerchantID
+
+	jsonBytes, err := json.Marshal(jsonDict)
+	if err != nil {
+		t.Fatalf("Failed to marshal JSON: %v", err)
+	}
+
+	var accountUnbindingRequest widget.AccountUnbindingRequest
+	if err = json.Unmarshal(jsonBytes, &accountUnbindingRequest); err != nil {
+		t.Fatalf("Failed to unmarshal JSON: %v", err)
+	}
+
+	ctx := context.Background()
+	endpoint := "https://api.sandbox.dana.id/v1.0/registration-account-unbinding.htm"
+	resourcePath := "/v1.0/registration-account-unbinding.htm"
+
+	customHeaders := map[string]string{
+		"X-TIMESTAMP": "invalid-timestamp-format",
+	}
+
+	if err = helper.ExecuteAndAssertErrorResponse(
+		t,
+		ctx,
+		&accountUnbindingRequest,
+		"POST",
+		endpoint,
+		resourcePath,
+		helper.TestConfig.JsonWidgetPath,
+		widgetAccountUnbindingCase,
+		caseName,
+		customHeaders,
+		nil,
+	); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestAccountUnbindFailInvalidUserStatus(t *testing.T) {
 	t.Skip("Skipping test AccountUnbindFailInvalidUserStatus")
 	caseName := "AccountUnbindFailInvalidUserStatus"

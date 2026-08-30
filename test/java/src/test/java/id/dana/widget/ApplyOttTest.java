@@ -75,7 +75,35 @@ public class ApplyOttTest {
     }
 
     @Test
-    @Disabled
+    void testApplyOttCustomerAccountUserStatusAbnormal() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SignatureException, InvalidKeyException {
+        String caseName = "ApplyOttCustomerAccountUserStatusAbnormal";
+        String abnormalUserPhone = "0855100800";
+        String abnormalUserPin = "146838";
+
+        String abnormalAccessToken = OauthUtil.getAccessToken(
+                abnormalUserPhone,
+                abnormalUserPin
+        );
+
+        ApplyOTTRequest requestData = TestUtil.getRequest(jsonPathFile, titleCase, caseName,
+                ApplyOTTRequest.class);
+
+        ApplyOTTRequestAdditionalInfo additionalInfo = new ApplyOTTRequestAdditionalInfo();
+        additionalInfo.setAccessToken(abnormalAccessToken);
+        additionalInfo.setDeviceId("deviceid123");
+
+        requestData.setAdditionalInfo(additionalInfo);
+
+        ApplyOTTResponse response = widgetApi.applyOTT(requestData);
+        if (TestUtil.isSuccessful(response.getResponseCode().substring(0, 3).trim())) {
+            org.junit.jupiter.api.Assertions.fail("Expected error for case " + caseName + " but API call succeeded");
+        } else {
+            TestUtil.assertFailResponse(jsonPathFile, titleCase, caseName, response, null);
+        }
+    }
+
+    @Test
+    @Disabled("Replaced by testApplyOttCustomerAccountUserStatusAbnormal (same as Go)")
     void testApplyOttFailInvalidUserStatus() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SignatureException, InvalidKeyException {
         String caseName = "ApplyOttFailInvalidUserStatus";
         String abnormalUserPhone = "0855100800";

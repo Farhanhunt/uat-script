@@ -12,14 +12,13 @@ use DanaUat\Helper\Assertion;
 use DanaUat\Helper\Util;
 use DanaUat\Widget\PaymentUtil;
 use Exception;
-use PHPUnit\Framework\SkippedTest;
 
 class RefundOrderTest extends TestCase
 {
     private static $titleCase = 'RefundOrder';
     private static $jsonPathFile = 'resource/request/components/Widget.json';
     private static $apiInstance;
-    private static $sharedOriginalPartnerReference, $sharedOriginalPartnerReferencePaid, $sharedOriginalPartnerReferenceDuplicate;
+    private static $sharedOriginalPartnerReference;
     private static $merchantId;
     private static $refundUrl;
     private static $sandboxUrl;
@@ -39,9 +38,6 @@ class RefundOrderTest extends TestCase
         self::$sandboxUrl = 'https://api.sandbox.dana.id';
         $dataOrder = self::createPayment();
         self::$sharedOriginalPartnerReference = $dataOrder['partnerReferenceNo'];
-        
-        self::$sharedOriginalPartnerReferencePaid = self::paidPayment();
-        self::$sharedOriginalPartnerReferenceDuplicate = self::paidPayment();
     }
 
     /**
@@ -53,9 +49,10 @@ class RefundOrderTest extends TestCase
     {
         Util::withDelay(callback: function () {
             $caseName = 'RefundOrderValidScenario';
+            $partnerReferenceNo = PaymentUtil::createPaymentWidgetPaid('PaymentSuccess', true);
             $jsonDict = Util::getRequest(self::$jsonPathFile, self::$titleCase, $caseName);
-            $jsonDict['originalPartnerReferenceNo'] = self::$sharedOriginalPartnerReferencePaid;
-            $jsonDict['partnerRefundNo'] = self::$sharedOriginalPartnerReferencePaid;
+            $jsonDict['originalPartnerReferenceNo'] = $partnerReferenceNo;
+            $jsonDict['partnerRefundNo'] = $partnerReferenceNo;
             $jsonDict['merchantId'] = self::$merchantId;
             $requestObj = ObjectSerializer::deserialize($jsonDict, 'Dana\Widget\v1\Model\RefundOrderRequest');
                         
@@ -127,9 +124,6 @@ class RefundOrderTest extends TestCase
 
     /**
      * Test refund failure when order is not paid.
-     *
-     * This test verifies that a refund request for an unpaid order fails as expected.
-     * @skip
      */
     public function testRefundFailOrderNotPaid(): void
     {
@@ -152,9 +146,6 @@ class RefundOrderTest extends TestCase
 
     /**
      * Test refund failure due to missing mandatory parameter.
-     *
-     * This test verifies that a refund request missing a mandatory parameter fails with 400 Bad Request.
-     * @skip
      */
     public function testRefundFailMandatoryParameterInvalid(): void
     {
@@ -221,7 +212,6 @@ class RefundOrderTest extends TestCase
      */
     public function testRefundFailInvalidSignature(): void
     {
-        $this->markTestSkipped('Widget scenario skipped by automation.');
         Util::withDelay(function () {
             $caseName = 'RefundFailInvalidSignature';
             $jsonDict = Util::getRequest(self::$jsonPathFile, self::$titleCase, $caseName);
@@ -271,13 +261,10 @@ class RefundOrderTest extends TestCase
 
     /**
      * Test refund failure due to idempotency violation.
-     *
-     * This test verifies that a repeated refund request fails as expected due to idempotency.
-     * @skip
      */
     public function testRefundFailIdempotent(): void
     {
-        $this->markTestSkipped('Widget scenario skipped by automation.');
+        $this->markTestSkipped('Skip: Idempotent test may require special handling or actual payment scenario (same as Go).');
         Util::withDelay(function () {
             $caseName = 'RefundFailIdempotent';
             $jsonDict = Util::getRequest(self::$jsonPathFile, self::$titleCase, $caseName);
@@ -343,12 +330,5 @@ class RefundOrderTest extends TestCase
             'partnerReferenceNo' => $responseArray['partnerReferenceNo'] ?? '',
             'webRedirectUrl' => $responseArray['webRedirectUrl'] ?? ''
         ];
-    }
-
-    private static function paidPayment(): string
-    {
-        // Use the shared utility method to create a paid payment
-        // This eliminates duplicate code across test classes
-        return PaymentUtil::createPaymentWidgetPaid();
     }
 }

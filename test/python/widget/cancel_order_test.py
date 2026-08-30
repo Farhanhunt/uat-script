@@ -13,6 +13,7 @@
 import os
 import pytest
 import asyncio
+import time
 from datetime import datetime, timedelta, timezone
 from dana.utils.snap_configuration import SnapConfiguration, AuthSettings, Env
 from dana.widget.v1.enum import *
@@ -85,19 +86,17 @@ def create_test_order_paid():
     return data_order[0]
 
 def create_test_order_refunded():
-    """Helper function to create a test order with refunded status"""
+    """Helper function to create a paid order and refund it (for cancel invalid-status tests)."""
     partner_reference_no = create_test_order_paid()
-    # Refund the order
+    time.sleep(2)
+
     case_name = "RefundOrderValidScenario"
     json_dict = get_request(json_path_file, "RefundOrder", case_name)
-    # Set the partner reference number
     json_dict["originalPartnerReferenceNo"] = partner_reference_no
     json_dict["partnerRefundNo"] = partner_reference_no
-    
-    # Create the request object from the JSON dictionary
-    refund_order_request = RefundOrderRequest.from_dict(json_dict)
+    json_dict["merchantId"] = os.environ.get("MERCHANT_ID")
 
-    # Call the refund API endpoint with the request object
+    refund_order_request = RefundOrderRequest.from_dict(json_dict)
     api_instance.refund_order(refund_order_request)
     return partner_reference_no
 
@@ -127,11 +126,12 @@ def test_cancel_order_valid_scenario():
     case_name = "CancelOrderValidScenario"
     json_dict = get_request(json_path_file, title_case, case_name)
     json_dict["originalPartnerReferenceNo"] = data_order[0]
+    json_dict["merchantId"] = os.environ.get("MERCHANT_ID")
     
     # Create the CancelOrderRequest object from the JSON dictionary
     cancel_order_request_obj = CancelOrderRequest.from_dict(json_dict)
     api_response = api_instance.cancel_order(cancel_order_request_obj)
-    assert_response(json_path_file, title_case, case_name, RefundOrderResponse.to_json(api_response), {"partnerReferenceNo": json_dict["originalPartnerReferenceNo"]})
+    assert_response(json_path_file, title_case, case_name, CancelOrderResponse.to_json(api_response), {"partnerReferenceNo": json_dict["originalPartnerReferenceNo"]})
 
 @with_delay()
 def test_cancel_order_fail_user_status_abnormal(test_cancel_order_reference_number):
@@ -208,47 +208,30 @@ def test_cancel_order_fail_merchant_status_abnormal(test_cancel_order_reference_
         pytest.fail("Expected NotFoundException but got a different exception")
 
 @with_delay()
-@pytest.mark.skip(reason="Skipped for now")
-def test_cancel_order_fail_missing_parameter(test_cancel_order_reference_number):
-    # Scenario: CancelOrderFailMissingParameter
-    # Purpose: Verify that the order cannot be cancelled if required parameters are missing in the request.
-    # Steps:
-    #   1. Prepare an incomplete request payload missing required parameters.
-    #   2. Call the cancel_order API endpoint.
-    #   3. Assert the response indicates a bad request error due to missing parameters.
-    # Expected: The API returns a 400 Bad Request response with an appropriate error message.
-    
+def test_cancel_order_fail_missing_parameter():
     """Should fail to cancel the order when required parameters are missing."""
-    # Case name and JSON request preparation
     case_name = "CancelOrderFailMissingParameter"
     json_dict = get_request(json_path_file, title_case, case_name)
-    
-    # Ensure the request contains the original partner reference number
-    json_dict["originaloriginalPartnerReferenceNo"] = test_cancel_order_reference_number
-    
-    # Create the CancelOrderRequest object from the JSON dictionary
-    cancel_order_request_obj = CancelOrderRequest.from_dict(json_dict)
+    json_dict["merchantId"] = os.environ.get("MERCHANT_ID")
 
-    # Prepare the headers with the signature
     headers = get_headers_with_signature(
         method="POST",
         resource_path="/v1.0/debit/cancel.htm",
         request_obj=json_dict,
-        with_timestamp=False
+        with_timestamp=True,
     )
 
-    # Execute the API call and assert the expected error response
     execute_and_assert_api_error(
         api_client,
         "POST",
         "https://api.sandbox.dana.id/v1.0/debit/cancel.htm",
-        cancel_order_request_obj,
+        json_dict,
         headers,
-        400,  # Bad Request
+        400,
         json_path_file,
         title_case,
         case_name,
-        {"originalPartnerReferenceNo": test_cancel_order_reference_number}  
+        None,
     )
 
 @with_delay()
@@ -398,37 +381,29 @@ def test_cancel_order_fail_insufficient_merchant_balance(test_cancel_order_refer
 
 @with_delay()
 def test_cancel_order_fail_invalid_status():
-    pytest.skip(
-        "Skipped: invalid-status / refunded-order cancel flow does not match NotFoundException expectation."
-    )
-    # Prepare data order paid
-    test_order_reference_number = create_test_order_paid()
-
     """Should fail to cancel the order when the order has already been refunded."""
+    partner_reference_no = create_test_order_refunded()
+    time.sleep(2)
+
     case_name = "CancelOrderFailOrderInvalidStatus"
     json_dict = get_request(json_path_file, title_case, case_name)
-    json_dict["originalPartnerReferenceNo"] = test_order_reference_number
-    
-    # Create the CancelOrderRequest object from the JSON dictionary
+    json_dict["originalPartnerReferenceNo"] = partner_reference_no
+    json_dict["merchantId"] = os.environ.get("MERCHANT_ID")
+
     cancel_order_request_obj = CancelOrderRequest.from_dict(json_dict)
-    
+
     try:
-        # Call the cancel_order API endpoint with the request object
         api_instance.cancel_order(cancel_order_request_obj)
-        
-        # If the API call succeeds, fail the test as we expect an exception
         pytest.fail("Expected NotFoundException but API call succeeded")
     except NotFoundException as e:
-        # If the API call fails with NotFoundException, assert the error response
         assert_fail_response(
             json_path_file,
             title_case,
             case_name,
             e.body,
-            {'originalPartnerReferenceNo': json_dict["originalPartnerReferenceNo"]}
+            {'originalPartnerReferenceNo': partner_reference_no},
         )
-    except:
-        # If any other exception occurs, fail the test
+    except Exception:
         pytest.fail("Expected NotFoundException but got a different exception")
 
 @with_delay()

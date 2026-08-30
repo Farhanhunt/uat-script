@@ -1,4 +1,4 @@
-import Dana from 'dana-node';
+import Dana, { ResponseError } from 'dana-node';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
@@ -13,6 +13,8 @@ dotenv.config();
 
 const titleCase = 'AccountUnbinding';
 const jsonPathFile = path.resolve(__dirname, '../../../resource/request/components/Widget.json');
+const baseUrl = 'https://api.sandbox.dana.id';
+const accountUnbindingApiPath = '/v1.0/registration-account-unbinding.htm';
 const userPhoneNumber = '083811223355';
 const userPin = '181818';
 const deviceId = 'deviceid123';
@@ -75,6 +77,36 @@ describe('Account Unbinding Tests', () => {
       fail('Expected an error but the API call succeeded');
     } catch (e: any) {
       // Optionally assert error structure here if needed
+    }
+  });
+
+  test('should fail to unbind account with invalid field format', async () => {
+    const caseName = 'AccountUnbindingInvalidFieldFormat';
+    const requestData: Record<string, unknown> = getRequest(jsonPathFile, titleCase, caseName);
+    requestData.merchantId = process.env.MERCHANT_ID || '';
+
+    const customHeaders: Record<string, string> = {
+      'X-TIMESTAMP': 'invalid-timestamp-format',
+    };
+
+    try {
+      await executeManualApiRequest(
+        caseName,
+        'POST',
+        baseUrl + accountUnbindingApiPath,
+        accountUnbindingApiPath,
+        requestData,
+        customHeaders,
+      );
+      fail('Expected an error but the API call succeeded');
+    } catch (e: any) {
+      if (Number(e.status) === 400) {
+        await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
+      } else if (e instanceof ResponseError) {
+        await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
+      } else {
+        fail('Account unbinding test failed: ' + (e.message || e));
+      }
     }
   });
 

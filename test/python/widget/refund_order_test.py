@@ -223,7 +223,37 @@ def test_refund_fail_order_not_exist():
         )
     except:
         # If any other exception occurs, fail the test
-        pytest.fail("Expected ForbiddenException but got a different exception")
+        pytest.fail("Expected NotFoundException but got a different exception")
+
+@with_delay()
+def test_refund_fail_invalid_signature():
+    case_name = "RefundFailInvalidSignature"
+    json_dict = get_request(json_path_file, title_case, case_name)
+    partner_ref = json_dict.get("originalPartnerReferenceNo") or generate_partner_reference_no()
+    json_dict["originalPartnerReferenceNo"] = partner_ref
+    json_dict["partnerRefundNo"] = partner_ref
+
+    refund_order_request_obj = RefundOrderRequest.from_dict(json_dict)
+    headers = get_headers_with_signature(
+        method="POST",
+        resource_path="/v1.0/debit/refund.htm",
+        request_obj=json_dict,
+        with_timestamp=True,
+    )
+    headers["X-SIGNATURE"] = "invalid_signature"
+
+    execute_and_assert_api_error(
+        api_client,
+        "POST",
+        "https://api.sandbox.dana.id/v1.0/debit/refund.htm",
+        refund_order_request_obj,
+        headers,
+        401,
+        json_path_file,
+        title_case,
+        case_name,
+        {"partnerReferenceNo": partner_ref},
+    )
 
 @with_delay()
 def test_refund_fail_timeout():

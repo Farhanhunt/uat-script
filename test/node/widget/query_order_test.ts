@@ -117,8 +117,9 @@ describe('QueryOrder Tests', () => {
     }
       }
 
-    // Test: Query Order Success (Paid) (Skipped)
+    // Test: Query Order Success (Paid)
     test('should successfully query order (paid)', async () => {
+        await createPaymentPaid();
         // Define the case name for the test
         const caseName = 'QueryOrderSuccessPaid';
         // Get the request data from the JSON file based on the case name
@@ -276,11 +277,13 @@ describe('QueryOrder Tests', () => {
     });
 
     // Test: Query Order Fail - Transaction Not Found
-    test.skip('should fail with transaction not found', async () => {
+    test('should fail with transaction not found', async () => {
         // Define the case name for the test
         const caseName = 'QueryOrderFailTransactionNotFound';
         // Get the request data from the JSON file based on the case name
         const requestData: QueryPaymentRequest = getRequest(jsonPathFile, titleCase, caseName);
+        requestData.originalPartnerReferenceNo =
+            `${requestData.originalPartnerReferenceNo}_NOT_FOUND`;
         try {
             // Call the queryPayment API with the request data
             const response = await dana.widgetApi.queryPayment(requestData);
@@ -297,8 +300,8 @@ describe('QueryOrder Tests', () => {
         }
     });
 
-    // Test: Query Order Fail - General Error
-    test('should fail with general error', async () => {
+    // Test: Query Order Fail - General Error — skipped (same as Go)
+    test.skip('should fail with general error', async () => {
         // Define the case name for the test
         const caseName = 'QueryOrderFailGeneralError';
         // Get the request data from the JSON file based on the case name

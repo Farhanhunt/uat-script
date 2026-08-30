@@ -109,6 +109,40 @@
                 "responseCode": "2000900",
                 "responseMessage": "Successful"
             }
+        },
+        "AccountUnbindFailInvalidUserStatus": {
+            "request": {
+                "partnerReferenceNo": "partnerReferenceNo",
+                "merchantId": "${MERCHANT_ID}",
+                "linkId": "linkId",
+                "subMerchantId": "210000123",
+                "tokenId": "tokenId",
+                "additionalInfo": {
+                    "accessToken": "${accessToken}",
+                    "deviceId": "deviceid123"
+                }
+            },
+            "response": {
+                "responseCode": "4030905",
+                "responseMessage": "Account Unbind failed"
+            }
+        },
+        "AccountUnbindingInvalidFieldFormat": {
+            "request": {
+                "partnerReferenceNo": "partnerReferenceNo",
+                "merchantId": "${MERCHANT_ID}",
+                "linkId": "linkId",
+                "subMerchantId": "210000123",
+                "tokenId": "tokenId",
+                "additionalInfo": {
+                    "accessToken": "test-access-token",
+                    "deviceId": "deviceid123"
+                }
+            },
+            "response": {
+                "responseCode": "4000901",
+                "responseMessage": "Invalid Field Format X-TIMESTAMP"
+            }
         }
     },
     "ApplyOtt": {
@@ -364,7 +398,7 @@
                         "extendInfo": "",
                         "merchantAppVersion": "",
                         "orderOsType": "",
-                        "orderTerminalType": "",
+                        "orderTerminalType": "SYSTEM",
                         "osType": "",
                         "sdkVersion": "",
                         "sessionId": "",
@@ -373,9 +407,10 @@
                         "tokenId": "",
                         "websiteLanguage": ""
                     },
-                    "mcc": "",
+                    "mcc": "5732",
                     "order": {
-                        "orderTitle": "shoe"
+                        "orderTitle": "shoe",
+                        "createdTime": "${createdTime}"
                     },
                     "productCode": "51051000100000000001"
                 },
@@ -771,8 +806,10 @@
                 "subMerchantId": ""
             },
             "response": {
-                "transactionStatusDesc": "PAYING",
-                "responseCode": "2005500"
+                "responseMessage": "Successful",
+                "responseCode": "2005500",
+                "latestTransactionStatus": "02",
+                "transactionStatusDesc": "PAYING"
             }
         },
         "QueryOrderSuccessCancelled": {
@@ -793,6 +830,7 @@
             "response": {
                 "responseMessage": "Successful",
                 "responseCode": "2005500",
+                "latestTransactionStatus": "05",
                 "transactionStatusDesc": "CANCELLED"
             }
         },

@@ -7,11 +7,14 @@ import { getRequest, generateFormattedDate } from '../helper/util';
 import { assertResponse, assertFailResponse } from '../helper/assertion';
 import { CancelOrderRequest, WidgetPaymentRequest } from 'dana-node/widget/v1';
 import { executeManualApiRequest } from '../helper/apiHelpers';
+import { createTestWidgetPaymentRefunded } from './payment_widget_util';
 
 dotenv.config();
 
 const titleCase = 'CancelOrder';
 const jsonPathFile = path.resolve(__dirname, '../../../resource/request/components/Widget.json');
+const baseUrl = 'https://api.sandbox.dana.id/';
+const cancelApiPath = '/v1.0/debit/cancel.htm';
 const merchantId = process.env.MERCHANT_ID || ''; // Merchant configuration
 const userPhoneNumber = '083811223355';
 const userPin = '181818';
@@ -90,12 +93,22 @@ describe('CancelOrder Tests', () => {
 
     test('should fail with missing parameter', async () => {
         const caseName = 'CancelOrderFailMissingParameter';
-        const requestData: CancelOrderRequest = getRequest(jsonPathFile, titleCase, caseName);
+        const requestData: Record<string, unknown> = getRequest(jsonPathFile, titleCase, caseName);
+        requestData.merchantId = merchantId;
+
         try {
-            const response = await dana.widgetApi.cancelOrder(requestData);
-            await assertFailResponse(jsonPathFile, titleCase, caseName, response);
+            await executeManualApiRequest(
+                caseName,
+                'POST',
+                baseUrl + cancelApiPath,
+                cancelApiPath,
+                requestData,
+            );
+            fail('Expected an error but the API call succeeded');
         } catch (e: any) {
             if (e instanceof ResponseError) {
+                await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
+            } else if (Number(e.status) === 400) {
                 await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse));
             } else {
                 fail('CancelOrder test failed: ' + (e.message || e));
@@ -182,12 +195,27 @@ describe('CancelOrder Tests', () => {
         }
     });
 
-    test.skip('should fail with order refunded', async () => {
+    test('should fail with order invalid status', async () => {
         const caseName = 'CancelOrderFailOrderInvalidStatus';
+        const partnerReferenceNo = await createTestWidgetPaymentRefunded();
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
         const requestData: CancelOrderRequest = getRequest(jsonPathFile, titleCase, caseName);
+        requestData.originalPartnerReferenceNo = partnerReferenceNo;
+        requestData.merchantId = merchantId;
+
         try {
-            fail('CancelOrder test is a placeholder.');
-        } catch (e: any) { }
+            await dana.widgetApi.cancelOrder(requestData);
+            fail('Expected error but the API call succeeded');
+        } catch (e: any) {
+            if (e instanceof ResponseError) {
+                await assertFailResponse(jsonPathFile, titleCase, caseName, JSON.stringify(e.rawResponse), {
+                    originalPartnerReferenceNo: partnerReferenceNo,
+                });
+            } else {
+                fail('CancelOrder test failed: ' + (e.message || e));
+            }
+        }
     });
 
     test('should fail with timeout', async () => {
