@@ -46,6 +46,137 @@ def normalize_mobile_number(mobile: str) -> str:
     return digits
 
 
+def phone_digits_for_input(phone_number: str) -> str:
+    """Local digits for +62 IPG inputs (no leading 0)."""
+    phone = normalize_mobile_number(phone_number)
+    return phone[1:] if phone.startswith("0") else phone
+
+
+async def _wait_until_enabled(locator, timeout_ms: int = 15000) -> bool:
+    deadline = time.monotonic() + (timeout_ms / 1000)
+    while time.monotonic() < deadline:
+        try:
+            if await locator.is_enabled():
+                return True
+        except Exception:
+            pass
+        await asyncio.sleep(0.2)
+    return False
+
+
+async def _type_phone_into_field(page, locator, phone_number: str, selector: str) -> None:
+    """Click + keyboard type so React enables CONTINUE (fill() often does not)."""
+    digits = phone_digits_for_input(phone_number)
+    await locator.click()
+    try:
+        await locator.fill("")
+    except Exception:
+        pass
+    await page.keyboard.type(digits, delay=50)
+    print(f"Phone typed using selector: {selector} with value: {digits}")
+
+
+async def _fill_phone_number(page, phone_number: str) -> bool:
+    phone_selectors = [
+        "input.txt-input-phone-number-field",
+        ".desktop-input>.txt-input-phone-number-field",
+        "input[type='tel']",
+        "input[placeholder*='12345678' i]",
+        "input[placeholder*='phone' i]",
+        "input[class*='phone' i]",
+        "label.new-clearable-input.form-ipg-phonenumber",
+    ]
+
+    try:
+        await page.wait_for_selector(
+            "input.txt-input-phone-number-field, input[type='tel'], label.form-ipg-phonenumber",
+            state="visible",
+            timeout=15000,
+        )
+    except Exception:
+        pass
+
+    for sel in phone_selectors:
+        loc = page.locator(sel).first
+        try:
+            if not await loc.is_visible(timeout=2000):
+                continue
+        except Exception:
+            continue
+
+        if sel.endswith("form-ipg-phonenumber"):
+            await loc.click()
+            await page.keyboard.type(phone_digits_for_input(phone_number), delay=50)
+            print("Phone typed via label.new-clearable-input.form-ipg-phonenumber")
+            return True
+
+        current_val = (await loc.input_value()).strip()
+        if current_val:
+            print(f"Phone field already pre-filled by DANA: {current_val} (skipping fill)")
+            return True
+
+        await _type_phone_into_field(page, loc, phone_number, sel)
+        return True
+
+    textbox = page.get_by_role("textbox").first
+    try:
+        if await textbox.is_visible(timeout=2000):
+            await _type_phone_into_field(page, textbox, phone_number, "role=textbox")
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
+async def _click_continue_button(page) -> bool:
+    print("Looking for CONTINUE / LANJUTKAN button...")
+    button_patterns = [
+        re.compile(r"^continue$", re.I),
+        re.compile(r"^lanjutkan$", re.I),
+        re.compile(r"^next$", re.I),
+    ]
+    for pattern in button_patterns:
+        loc = page.get_by_role("button", name=pattern).first
+        try:
+            if not await loc.is_visible(timeout=2000):
+                continue
+            if not await _wait_until_enabled(loc):
+                print(f"Button matched {pattern.pattern} but stayed disabled")
+                continue
+            await loc.click(timeout=10000)
+            print(f"Submit clicked via role+name: {pattern.pattern}")
+            return True
+        except Exception as e:
+            print(f"Could not click button {pattern.pattern}: {e}")
+
+    css_selectors = [
+        "button[type='submit']",
+        "button.btn-primary",
+        "button.next-button",
+        ".btn-continue",
+        ".btn-submit",
+        "button:has-text('CONTINUE')",
+        "button:has-text('Continue')",
+        "button:has-text('LANJUTKAN')",
+    ]
+    for sel in css_selectors:
+        loc = page.locator(sel).first
+        try:
+            if not await loc.is_visible(timeout=2000):
+                continue
+            if not await _wait_until_enabled(loc):
+                continue
+            await loc.click(timeout=10000)
+            print(f"Submit clicked via selector: {sel}")
+            return True
+        except Exception:
+            pass
+
+    print("Warning: could not click CONTINUE button")
+    return False
+
+
 def extract_auth_code_from_url(url: str):
     try:
         parsed = urlparse(url)
@@ -109,76 +240,29 @@ async def _automate_oauth_flow(page, phone_number: str, pin: str, oauth_url: str
     pin_selector = (
         ".txt-input-pin-field, input[maxlength='6'][inputmode='numeric'], input[type='password']"
     )
-    is_pin_visible = await page.locator(pin_selector).first.is_visible()
+    is_pin_visible = await page.locator(pin_selector).first.is_visible(timeout=5000)
 
     if not is_pin_visible:
-        phone_selectors = [
-            "input.txt-input-phone-number-field",
-            "input[type='tel']",
-            "input[placeholder='12312345678']",
-            "input[maxlength='13']",
-            "input[maxlength='15']",
-        ]
-        phone_filled = False
-        for sel in phone_selectors:
-            loc = page.locator(sel).first
-            if await loc.is_visible():
-                current_val = await loc.input_value()
-                if current_val:
-                    print(f"Phone field already pre-filled by DANA: {current_val} (skipping fill)")
-                    phone_filled = True
-                else:
-                    await loc.fill(phone_number)
-                    print(f"Phone filled using selector: {sel} with value: {phone_number}")
-                    phone_filled = True
-                break
+        # seamlessData pre-fills phone asynchronously on legacy pages.
+        if "seamlessData=" in oauth_url:
+            await page.wait_for_timeout(2000)
 
-        if not phone_filled:
-            label = page.locator("label.new-clearable-input.form-ipg-phonenumber").first
-            if await label.is_visible():
-                await label.click()
-                await page.keyboard.type(phone_number)
-                print("Phone filled via label click + keyboard type")
-                phone_filled = True
-
+        phone_filled = await _fill_phone_number(page, phone_number)
         if not phone_filled:
             print("Warning: could not determine phone field state")
 
         await page.wait_for_timeout(1000)
-
-        submitted = False
-        for text in ("LANJUTKAN", "Lanjutkan", "Next", "Continue"):
-            loc = page.get_by_role("button", name=text, exact=True).first
-            if await loc.is_visible():
-                await loc.click()
-                print(f"Submit clicked via role+name: {text}")
-                submitted = True
-                break
-
-        if not submitted:
-            for sel in (
-                "button[type='submit']",
-                "button.btn-primary",
-                "button.next-button",
-                ".btn-continue",
-                ".btn-submit",
-            ):
-                loc = page.locator(sel).first
-                if await loc.is_visible():
-                    await loc.click()
-                    print(f"Submit clicked via selector: {sel}")
-                    submitted = True
-                    break
-
-        if not submitted:
-            print("Warning: could not click LANJUTKAN button")
+        await _click_continue_button(page)
 
         await page.wait_for_timeout(3000)
 
         continue_loc = page.locator("button.btn-continue.fs-unmask.btn.btn-primary").first
-        if await continue_loc.is_visible():
-            await continue_loc.click()
-            await page.wait_for_timeout(1000)
+        try:
+            if await continue_loc.is_visible(timeout=2000) and await _wait_until_enabled(continue_loc):
+                await continue_loc.click(timeout=10000)
+                await page.wait_for_timeout(1000)
+        except Exception:
+            pass
 
         try:
             await page.wait_for_selector(pin_selector, state="attached", timeout=15000)
@@ -286,7 +370,7 @@ async def automate_oauth_simple(
                 geolocation={"longitude": 106.8456, "latitude": -6.2088},
                 permissions=["geolocation"],
             )
-            context.set_default_timeout(60000)
+            context.set_default_timeout(30000)
             page = await context.new_page()
 
             try:

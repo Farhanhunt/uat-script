@@ -51,7 +51,7 @@ resolve_needs_playwright() {
 
     # Browser/OAuth UI automation (widget + PG cancel/query/refund flows).
     if echo "$scope" | grep -Eq \
-        'automation|oauth|browser|playwright|apply_token|apply_ott|get_auth|unbinding|balance_inquiry|query_order|query_payment|cancel_order|refund_order|payment_widget|payment_pg'; then
+        'automation|oauth|browser|playwright|apply_token|apply_ott|get_auth|unbinding|unbind|balance_inquiry|query_order|query_payment|cancel_order|refund_order|payment_widget|payment_pg'; then
         needs_playwright=true
     fi
 
