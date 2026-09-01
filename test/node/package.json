@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Node.js version of DANA Self Integration Tests",
   "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "test": "jest --config jest.config.js"
   },

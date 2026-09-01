@@ -109,7 +109,7 @@ def create_test_order_refunded():
 
 @with_delay()
 @retry_on_inconsistent_request(max_retries=3, delay_seconds=1)
-def test_cancel_order(test_order_reference_number):
+def test_cancel_order_valid_scenario(test_order_reference_number):
     """Should cancel the order"""
     # Cancel order
     case_name = "CancelOrderValidScenario"

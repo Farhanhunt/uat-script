@@ -6,8 +6,7 @@ import time
 from urllib.parse import parse_qs, unquote, urlparse
 from uuid import uuid4
 
-from dana.widget.v1.models.oauth2_url_data import Oauth2UrlData
-from dana.widget.v1.models.oauth2_url_data_seamless_data import Oauth2UrlDataSeamlessData
+from dana.widget.v1.models import Oauth2UrlData, Oauth2UrlDataSeamlessData
 from dana.widget.v1.util import Util
 
 DEFAULT_PHONE = "083811223355"
@@ -69,22 +68,22 @@ def extract_mobile_from_url(url: str) -> str:
 
 
 def get_redirect_oauth_url(phone_number: str | None = None) -> str:
-    """Build OAuth URL via SDK (aligned with Go GetRedirectOauthUrl / Node auth-utils)."""
+    """Generate OAuth URL — aligned with Go GetRedirectOauthUrl / widget.GenerateOauthUrl."""
     phone = normalize_mobile_number(phone_number or DEFAULT_PHONE)
     redirect_url = os.environ.get("REDIRECT_URL_OAUTH") or "https://google.com"
 
+    # Only include mobileNumber to pre-fill the phone field.
+    # Extra seamless fields can push DANA into /app/ login instead of merchant redirect.
+    seamless_data = Oauth2UrlDataSeamlessData(mobile_number=phone)
     oauth_data = Oauth2UrlData(
         external_id=str(uuid4()),
         merchant_id=os.environ.get("MERCHANT_ID", ""),
         redirect_url=redirect_url,
-        seamless_data=Oauth2UrlDataSeamlessData(mobile_number=phone),
+        seamless_data=seamless_data,
+        scopes=[Util.generate_scopes()],
     )
 
-    oauth_url = Util.generate_oauth_url(
-        oauth_data,
-        private_key=os.environ.get("PRIVATE_KEY"),
-        private_key_path=os.environ.get("PRIVATE_KEY_PATH"),
-    )
+    oauth_url = Util.generate_oauth_url(oauth_data)
     print(f"RedirectOauthUrl: {oauth_url}")
     return oauth_url
 
@@ -246,7 +245,7 @@ async def automate_oauth_simple(
     async_playwright = _require_async_playwright()
     mobile_number = normalize_mobile_number(phone_number or DEFAULT_PHONE)
     used_pin = pin or DEFAULT_PIN
-    redirect_url = oauth_url or get_redirect_oauth_url(mobile_number)
+    fixed_oauth_url = oauth_url
 
     if ci_mode:
         max_retries = 2
@@ -272,6 +271,8 @@ async def automate_oauth_simple(
         print(f"\nOAuth Attempt {attempt + 1}/{max_retries}")
         print(f"Using mobile: {mobile_number}")
         print(f"Using PIN: {used_pin}")
+
+        redirect_url = fixed_oauth_url or get_redirect_oauth_url(mobile_number)
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True, args=launch_args)

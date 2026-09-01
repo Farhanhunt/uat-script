@@ -37,28 +37,14 @@ resolve_needs_playwright() {
         return 0
     fi
 
-    case "$folderName" in
-        ""|"widget")
-            if [ -z "$caseName" ] && [ -z "$runPattern" ]; then
-                needs_playwright=false
-            elif [ -z "$caseName" ] && [ -z "$runPattern" ]; then
-                needs_playwright=true
-            else
-                caseNameLower=$(echo "$caseName" | tr '[:upper:]' '[:lower:]')
-                runPatternLower=$(echo "$runPattern" | tr '[:upper:]' '[:lower:]')
-                if echo "$caseNameLower $runPatternLower" | grep -Eq "automation|oauth|browser|playwright"; then
-                    needs_playwright=true
-                fi
-            fi
-            ;;
-        payment_gateway)
-            caseNameLower=$(echo "$caseName" | tr '[:upper:]' '[:lower:]')
-            runPatternLower=$(echo "$runPattern" | tr '[:upper:]' '[:lower:]')
-            if echo "$caseNameLower $runPatternLower" | grep -Eq "refund_order|cancel_order|query_payment|automate|payment"; then
-                needs_playwright=true
-            fi
-            ;;
-    esac
+    caseNameLower=$(echo "$caseName" | tr '[:upper:]' '[:lower:]')
+    runPatternLower=$(echo "$runPattern" | tr '[:upper:]' '[:lower:]')
+    scope="$caseNameLower $runPatternLower $folderName"
+
+    if echo "$scope" | grep -Eq \
+        'automation|oauth|browser|playwright|apply_token|apply_ott|get_auth|unbinding|balance_inquiry|query_order|query_payment|cancel_order|refund_order|payment_widget|payment_pg|payment_test'; then
+        needs_playwright=true
+    fi
 
     echo "$needs_playwright"
 }
@@ -82,6 +68,12 @@ setup_node_env() {
     echo "Running Node.js tests..."
     node --version
     npm --version
+
+    node_major=$(node -p "parseInt(process.versions.node.split('.')[0], 10)" 2>/dev/null || echo "0")
+    if [ "$node_major" -lt 20 ]; then
+        echo "ERROR: Node.js >= 20 is required for Playwright payment automation (current: $(node -v))."
+        exit 1
+    fi
 
     export NODE_OPTIONS="${NODE_OPTIONS:-} --experimental-vm-modules"
     cd "$NODE_TEST_DIR"
