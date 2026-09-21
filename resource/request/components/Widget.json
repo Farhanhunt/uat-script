@@ -2,7 +2,7 @@
     "GetOauth": {
         "GetOauthSuccess": {
             "request": {
-                "mobileNumber": "6283811223355",
+                "mobileNumber": "6285811115697",
                 "bizScenario": "PAYMENT",
                 "verifiedTime": "2020-12-23T07:44:11+07:00",
                 "externalUid": "7381273821udasudy712368213",
@@ -367,7 +367,7 @@
                         "sessionId": "",
                         "sourcePlatform": "IPG",
                         "terminalType": "SYSTEM",
-                        "tokenId": "",
+                        "tokenId": "ef432923-c952-4e95-966e-7931f4d9113d",
                         "websiteLanguage": ""
                     },
                     "mcc": "5732",
@@ -379,7 +379,7 @@
                 },
                 "amount": {
                     "currency": "IDR",
-                    "value": "1.00"
+                    "value": "99999999999999999999999999999.00"
                 },
                 "merchantId": "${MERCHANT_ID}",
                 "partnerReferenceNo": "${partnerReferenceNo}"
@@ -404,7 +404,7 @@
                         "sessionId": "",
                         "sourcePlatform": "IPG",
                         "terminalType": "WEB",
-                        "tokenId": "",
+                        "tokenId": "ef432923-c952-4e95-966e-7931f4d9113d",
                         "websiteLanguage": ""
                     },
                     "mcc": "5732",
@@ -416,7 +416,7 @@
                 },
                 "amount": {
                     "currency": "IDR",
-                    "value": "205502.00"
+                    "value": "99999999999999999999999999999999999.00"
                 },
                 "merchantId": "${merchantId}",
                 "partnerReferenceNo": "${partnerReferenceNo}"
@@ -446,13 +446,13 @@
                     },
                     "mcc": "",
                     "order": {
-                        "orderTitle": "shoe"
+                        "orderTitle": "Situs"
                     },
                     "productCode": "51051000100000000001"
                 },
                 "amount": {
                     "currency": "IDR",
-                    "value": "10000.0000"
+                    "value": "99999999999999999999999999.00"
                 },
                 "merchantId": "${MERCHANT_ID}",
                 "partnerReferenceNo": "${partnerReferenceNo}"
@@ -477,7 +477,7 @@
                         "sessionId": "",
                         "sourcePlatform": "IPG",
                         "terminalType": "WEB",
-                        "tokenId": "",
+                        "tokenId": "ef432923-c952-4e95-966e-7931f4d9113d",
                         "websiteLanguage": ""
                     },
                     "mcc": "",
@@ -488,7 +488,7 @@
                 },
                 "amount": {
                     "currency": "IDR",
-                    "value": "1.00"
+                    "value": "99999999999999999999999999999.00"
                 },
                 "merchantId": "${MERCHANT_ID}",
                 "partnerReferenceNo": ""
@@ -524,7 +524,7 @@
                 },
                 "amount": {
                     "currency": "IDR",
-                    "value": "1.00"
+                    "value": "999999999999999999999999.00"
                 },
                 "merchantId": "${MERCHANT_ID}",
                 "partnerReferenceNo": "${partnerReferenceNo}"
