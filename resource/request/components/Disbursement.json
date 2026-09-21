@@ -1,9 +1,17 @@
 {
+  "QRISInfo": {
+    "merchantName": "PMMAX TECHNOLOGY LIMITED",
+    "qrisType": "Static QRIS",
+    "qrImageUrl": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/071c4dd14e864efdaedd08e9b2e3e74b.jpeg~tplv-0es2k971ck-image.image?rcl=20260922041026E858DEE7DB7998E74B2B&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1792613458&x-signature=OIm3fLdp8Rc%2BO%2BlT%2FRcUOQzOMx8%3D",
+    "usage": "Scan untuk transfer / pembayaran alternatif",
+    "supportedApps": ["DANA", "OVO", "GoPay", "ShopeePay", "Mobile Banking"],
+    "customerNumber": "6285811115697"
+  },
   "DanaAccountInquiry": {
     "InquiryCustomerValidData": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "1.00",
           "currency": "IDR"
@@ -14,7 +22,8 @@
           "externalDivisionId": null,
           "chargeTarget": null,
           "accessToken": null,
-          "customerId": null
+          "customerId": null,
+          "qrisMerchant": "PMMAX TECHNOLOGY LIMITED"
         }
       },
       "response": {
@@ -77,7 +86,7 @@
     "InquiryCustomerExceededLimit": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "210000000.00",
           "currency": "IDR"
@@ -99,7 +108,7 @@
     "InquiryCustomerUnauthorizedSignature": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "210000.00",
           "currency": "IDR"
@@ -123,7 +132,7 @@
     "TopUpCustomerValid": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "1.00",
           "currency": "IDR"
@@ -143,7 +152,9 @@
           "externalDivisionId": null,
           "chargeTarget": null,
           "accessToken": null,
-          "customerId": null
+          "customerId": null,
+          "qrisMerchant": "PMMAX TECHNOLOGY LIMITED",
+          "qrImageUrl": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/071c4dd14e864efdaedd08e9b2e3e74b.jpeg~tplv-0es2k971ck-image.image?rcl=20260922041026E858DEE7DB7998E74B2B&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1792613458&x-signature=OIm3fLdp8Rc%2BO%2BlT%2FRcUOQzOMx8%3D"
         }
       },
       "response": {
@@ -185,7 +196,7 @@
     "TopUpCustomerIdempotent": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "1.00",
           "currency": "IDR"
@@ -247,7 +258,7 @@
     "TopUpCustomerExceedAmountLimit": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "21000000.00",
           "currency": "IDR"
@@ -308,7 +319,7 @@
     "TopUpCustomerUnauthorizedSignature": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "1.00",
           "currency": "IDR"
@@ -339,7 +350,7 @@
     "TopUpCustomerInvalidFieldFormat": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "1.00",
           "currency": "USD"
@@ -370,7 +381,7 @@
     "TopUpCustomerInconsistentRequest": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "1.00",
           "currency": "IDR"
@@ -463,7 +474,7 @@
     "TopUpCustomerInsufficientFund": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "amount": {
           "value": "1000000000000.00",
           "currency": "IDR"
@@ -585,7 +596,7 @@
     "InquiryBankAccountValidDataAmount": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "beneficiaryAccountNumber": "2460888509",
         "amount": {
           "value": "50000.00",
@@ -610,7 +621,7 @@
     "InquiryBankAccountInsufficientFund": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "beneficiaryAccountNumber": "2460888509",
         "amount": {
           "value": "50000000000.00",
@@ -635,481 +646,52 @@
     "InquiryBankAccountUnauthorizedSignature": {
       "request": {
         "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
+        "customerNumber": "6285811115697",
         "beneficiaryAccountNumber": "2460888509",
         "amount": {
-          "value": "50000.00",
+          "value": "500000000.00",
           "currency": "IDR"
         },
         "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "beneficiaryBankCode": "014",
-          "beneficiaryAccountName": null,
-          "accountType": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4014200",
-        "responseMessage": "Unauthorized. Invalid Signature",
-        "partnerReferenceNo": "${partnerReferenceNo}"
-      }
-    },
-    "InquiryBankAccountInactiveAccount": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "beneficiaryAccountNumber": "81298055132",
-        "amount": {
-          "value": "50000.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "beneficiaryBankCode": "014",
-          "beneficiaryAccountName": null,
-          "accountType": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4034218",
-        "responseMessage": "Inactive Account Merchant",
-        "partnerReferenceNo": "${partnerReferenceNo}"
-      }
-    },
-    "InquiryBankAccountInvalidMerchant": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "0855100800",
-        "beneficiaryAccountNumber": "855100800",
-        "amount": {
-          "value": "1000.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "beneficiaryBankCode": "014",
-          "beneficiaryAccountName": null,
-          "accountType": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4044208",
-        "responseMessage": "Invalid Merchant",
-        "partnerReferenceNo": "${partnerReferenceNo}"
-      }
-    },
-    "InquiryBankAccountInvalidCard": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "beneficiaryAccountNumber": "815919191",
-        "amount": {
-          "value": "50000.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "beneficiaryBankCode": "014",
-          "beneficiaryAccountName": null,
-          "accountType": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4044211",
-        "responseMessage": "Invalid Card/Account/Customer Number/Virtual Account",
-        "partnerReferenceNo": "${partnerReferenceNo}"
-      }
-    },
-    "InquiryBankAccountInvalidFieldFormat": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "beneficiaryAccountNumber": "2460888509",
-        "amount": {
-          "value": "50000.00",
-          "currency": "USD"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "beneficiaryBankCode": "014",
-          "beneficiaryAccountName": null,
-          "accountType": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4004201",
-        "responseMessage": "Invalid Field Format",
-        "partnerReferenceNo": "${partnerReferenceNo}"
-      }
-    },
-    "InquiryBankAccountMissingMandatoryField": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "beneficiaryAccountNumber": "2460888509",
-        "amount": {
-          "value": "50000.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "beneficiaryBankCode": "014",
-          "beneficiaryAccountName": null,
-          "accountType": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4004202",
-        "responseMessage": "Invalid Mandatory Field additionalInfo.fundType",
-        "partnerReferenceNo": "${partnerReferenceNo}"
-      }
-    }
-  },
-  "TransferToBank": {
-    "DisbursementBankValidAccount": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "2460888509",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "50000.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": false,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "2004300|2024300",
-        "responseMessage": "Success|Request In Progress"
-      }
-    },
-    "DisbursementBankInsufficientFund": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "2460888509",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "1000000000000.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4034314",
-        "responseMessage": "Insufficient Fund"
-      }
-    },
-    "DisbursementBankValidAccountInProgress": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "2460888509",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "50000.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": true,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "2024300",
-        "responseMessage": "Request In Progress"
-      }
-    },
-    "DisbursementBankUnauthorizedSignature": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "2460888509",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "100.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4014300",
-        "responseMessage": "Unauthorized. Invalid Signature"
-      }
-    },
-    "DisbursementBankMissingMandatoryField": {
-      "request": {
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryBankCode": "014",
-        "beneficiaryAccountNumber": "",
-        "amount": {
-          "value": "100.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4004302",
-        "responseMessage": "Invalid Mandatory Field beneficiaryAccountNumber"
-      }
-    },
-    "DisbursementBankInvalidFieldFormat": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "2460888509",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "1000.00",
-          "currency": "USD"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4004301",
-        "responseMessage": "Invalid Field Format"
-      }
-    },
-    "DisbursementBankInvalidMandatoryFieldFormat": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "2460888509",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "1000.00",
-          "currency": "USD"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4004302",
-        "responseMessage": "Invalid Mandatory Field X-SIGNATURE"
-      }
-    },
-    "DisbursementBankInconsistentRequest": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "2460888509",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "50000.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4044318",
-        "responseMessage": "Inconsistent Request"
-      }
-    },
-    "DisbursementBankSuspectedFraud": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "82298055100",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "100.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4034303",
-        "responseMessage": "Suspected Fraud"
-      }
-    },
-    "DisbursementBankGeneralError": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "8121111111",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "10.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "5004300",
-        "responseMessage": "General Error|General Error. For testing positive case in sandbox use beneficiaryAccountNumber 2460888509 and beneficiaryBankCode 014"
-      }
-    },
-    "DisbursementBankUnknownError": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "8551008794",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "100.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "5004301",
-        "responseMessage": "Internal Server Error|Internal Server Error. For testing positive case in sandbox use beneficiaryAccountNumber 2460888509 and beneficiaryBankCode 014"
-      }
-    },
-    "DisbursementBankInactiveAccount": {
-      "request": {
-        "partnerReferenceNo": "${partnerReferenceNo}",
-        "customerNumber": "62811742234",
-        "accountType": null,
-        "beneficiaryAccountNumber": "81398055100",
-        "beneficiaryBankCode": "014",
-        "amount": {
-          "value": "100.00",
-          "currency": "IDR"
-        },
-        "additionalInfo": {
-          "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
-          "externalDivisionId": null,
-          "chargeTarget": null,
-          "needNotify": null,
-          "beneficiaryAccountName": null,
-          "accessToken": null
-        }
-      },
-      "response": {
-        "responseCode": "4034318",
-        "responseMessage": "Inactive Account Merchant"
-      }
-    }
-  },
-  "TransferToBankInquiryStatus": {
-    "TransferToBankInquiryStatusSuccessful": {
-      "request": {
-        "originalPartnerReferenceNo": "${originalPartnerReferenceNo}",
-        "originalReferenceNo": null,
-        "originalExternalId": null,
-        "serviceCode": "00",
-        "additionalInfo": null
-      },
-      "response": {
-        "responseCode": "2000000",
-        "responseMessage": "Successful"
-      }
-    },
-    "TransferToBankInquiryStatusTransactionNotFound": {
-      "request": {
-        "originalPartnerReferenceNo": "${originalPartnerReferenceNo}",
-        "originalReferenceNo": null,
-        "originalExternalId": null,
-        "serviceCode": "00",
-        "additionalInfo": null
-      },
-      "response": {
-        "responseCode": "4040001",
-        "responseMessage": "Transaction Not Found"
-      }
-    }
-  }
-}
+           "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
+           "externalDivisionId": null,
+           "chargeTarget": null,
+           "beneficiaryBankCode": "014",
+           "beneficiaryAccountName": null,
+           "accountType": null,
+           "accessToken": null
+         }
+       },
+       "response": {
+         "responseCode": "4014200",
+         "responseMessage": "Unauthorized. Invalid Signature",
+         "partnerReferenceNo": "${partnerReferenceNo}"
+       }
+     },
+     "InquiryBankAccountInactiveAccount": {
+       "request": {
+         "partnerReferenceNo": "${partnerReferenceNo}",
+         "customerNumber": "6285811115697",
+         "beneficiaryAccountNumber": "81298055132",
+         "amount": {
+           "value": "50000.00",
+           "currency": "IDR"
+         },
+         "additionalInfo": {
+           "fundType": "MERCHANT_WITHDRAW_FOR_CORPORATE",
+           "externalDivisionId": null,
+           "chargeTarget": null,
+           "beneficiaryBankCode": "014",
+           "beneficiaryAccountName": null,
+           "accountType": null,
+           "accessToken": null
+         }
+       },
+       "response": {
+         "responseCode": "2004200",
+         "responseMessage": "Success",
+         "partnerReferenceNo": "${partnerReferenceNo}"
+       }
+       }
+    .  }
+}}. 
